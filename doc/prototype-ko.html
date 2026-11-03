@@ -1,0 +1,759 @@
+<title>COVID-19 scRNA-seq Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: lab-bench pipeline — step rail on the left (top chips on phones), one instrument panel per step */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --surface-2:#f6f8f8; --ink:#13201f; --ink-2:#45524f; --muted:#76837f; --line:#d9e1df;
+  --accent:#0d6b70; --accent-ink:#ffffff; --accent-soft:#d9eeee;
+  --healthy:#7b8a8f; --covid:#b0215a;
+  --up:#d9531e; --down:#2a78d6;
+  --good:#1f7a3a; --warn:#a15c00;
+  --seq0:#e3e8ea; --seq1:#184f95;
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4; --c6:#008300; --c7:#6250d6; --c8:#e34948;
+  --sans:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1514; --surface:#162120; --surface-2:#1b2827; --ink:#e5eeec; --ink-2:#aab9b6; --muted:#7f8f8c; --line:#283634;
+  --accent:#53bcc2; --accent-ink:#04201f; --accent-soft:#173c3d;
+  --healthy:#97a7ab; --covid:#e45b8f; --up:#e8763f; --down:#4b93ea; --good:#5cc47a; --warn:#e0a040;
+  --seq0:#283433; --seq1:#9ec5f4;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1514; --surface:#162120; --surface-2:#1b2827; --ink:#e5eeec; --ink-2:#aab9b6; --muted:#7f8f8c; --line:#283634;
+  --accent:#53bcc2; --accent-ink:#04201f; --accent-soft:#173c3d;
+  --healthy:#97a7ab; --covid:#e45b8f; --up:#e8763f; --down:#4b93ea; --good:#5cc47a; --warn:#e0a040;
+  --seq0:#283433; --seq1:#9ec5f4;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+  color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px)); padding-block:20px 40px}
+.app{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:220px minmax(0,1fr); gap:28px; align-items:start}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* rail */
+.rail{position:sticky; top:20px}
+.brand{font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.brand b{display:block; font-family:var(--sans); font-size:19px; letter-spacing:0; text-transform:none; color:var(--ink); line-height:1.25; margin-top:2px}
+.rail ol{list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:2px; position:relative}
+.rail ol::before{content:""; position:absolute; left:13px; top:8px; bottom:8px; width:2px; background:var(--line)}
+.rail li button{all:unset; cursor:pointer; display:flex; gap:10px; align-items:center; padding:5px 8px 5px 0; width:100%; border-radius:8px; position:relative}
+.rail li button:focus-visible{outline:2px solid var(--accent)}
+.dot{width:28px; height:28px; flex:none; border-radius:50%; display:grid; place-items:center; font-family:var(--mono); font-size:11px; font-weight:600;
+  background:var(--surface); border:2px solid var(--line); color:var(--muted); z-index:1}
+.rail .nm{font-size:13.5px; color:var(--ink-2); line-height:1.2}
+.rail .nm small{display:block; font-family:var(--mono); font-size:10.5px; color:var(--muted)}
+.rail li.done .dot{border-color:var(--accent); color:var(--accent)}
+.rail li.cur .dot{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.rail li.cur .nm{color:var(--ink); font-weight:600}
+.lang{margin-top:18px; display:flex; gap:6px; align-items:center; font-size:12px; color:var(--muted)}
+
+/* segmented & buttons */
+.seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--line); border-radius:999px; padding:3px; gap:2px}
+.seg button{border:0; background:none; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:13px; color:var(--ink-2); font-family:var(--mono)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink)}
+.btn{border:0; background:var(--accent); color:var(--accent-ink); padding:9px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-size:14px; display:inline-flex; gap:8px; align-items:center}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+.btn[disabled]{opacity:.45; cursor:default}
+.btn .k{font-family:var(--mono); font-weight:500; font-size:12px; opacity:.85}
+
+/* stage */
+.head{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px}
+.eyebrow{font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.06em; text-transform:uppercase}
+h1{font-size:clamp(24px,3.4vw,32px); line-height:1.15; margin:2px 0 0; text-wrap:balance; font-weight:700}
+h1 span{font-family:var(--mono); font-weight:500; font-size:.55em; color:var(--muted); margin-left:8px}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:16px}
+.controls{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center}
+.ctl{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2); font-family:var(--mono)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px}
+.ctl output{min-width:44px; color:var(--ink); font-weight:600}
+.grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+.fig{min-width:0}
+.fig .cap{font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between; gap:8px}
+canvas.plot{width:100%; aspect-ratio:4/3; display:block; background:var(--surface-2); border-radius:10px; touch-action:none}
+canvas.plot.sq{aspect-ratio:1/1}
+.svgbox{width:100%; min-width:0}
+.svgbox svg{display:block; width:100%; height:auto; overflow:visible}
+svg text{font-family:var(--mono); fill:var(--ink-2); font-size:11px}
+svg .ax{stroke:var(--line)} svg .lbl{fill:var(--muted)} svg .strong{fill:var(--ink); font-weight:600}
+
+/* DO / SEE / NEXT */
+.story{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px}
+.card{border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:var(--surface-2); min-width:0}
+.card .tag{font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.08em; display:inline-block; padding:1px 7px; border-radius:5px; margin-bottom:4px}
+.card.do .tag{background:var(--line); color:var(--ink-2)}
+.card.see .tag{background:var(--accent-soft); color:var(--accent)}
+.card.next .tag{background:var(--accent); color:var(--accent-ink)}
+.card p{margin:0; font-size:14px}
+.card.locked p{color:var(--muted)}
+.code{display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px dashed var(--line); border-radius:10px; padding:7px 10px; min-width:0}
+.code code{font-family:var(--mono); font-size:12.5px; color:var(--ink); overflow-x:auto; white-space:nowrap; flex:1; min-width:0}
+.code .who{font-family:var(--mono); font-size:10.5px; color:var(--muted); text-transform:uppercase; flex:none}
+.code button{border:1px solid var(--line); background:var(--surface); border-radius:6px; font-size:11px; padding:2px 8px; cursor:pointer; font-family:var(--mono); flex:none}
+
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--surface); color:var(--ink-2); display:inline-flex; align-items:center; gap:6px}
+.chip.ok{color:var(--good); border-color:currentColor} .chip.bad{color:var(--warn); border-color:currentColor}
+.chip i{width:9px; height:9px; border-radius:50%; display:inline-block; font-style:normal}
+button.chip{cursor:pointer}
+button.chip[aria-pressed="false"]{opacity:.45}
+
+.tiles{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px}
+.tile{border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+.tile b{display:block; font-family:var(--mono); font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2}
+.tile span{font-size:12px; color:var(--muted)}
+
+.qbox{border-left:3px solid var(--accent); padding:4px 0 4px 14px}
+.qbox .q{font-size:clamp(17px,2.4vw,21px); font-weight:600; text-wrap:balance; line-height:1.35}
+.meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+
+.mtx{overflow-x:auto} .mtx table{border-collapse:separate; border-spacing:2px; font-family:var(--mono); font-size:11.5px; font-variant-numeric:tabular-nums}
+.mtx th{font-weight:500; color:var(--muted); padding:2px 6px; text-align:right; white-space:nowrap}
+.mtx td{width:34px; height:26px; text-align:center; border-radius:4px}
+
+.tt{border:0; background:none; padding:0; border-bottom:1.5px dotted var(--accent); cursor:help; font:inherit; color:inherit}
+.pop{position:fixed; z-index:30; max-width:260px; background:var(--ink); color:var(--bg); padding:8px 11px; border-radius:9px; font-size:13px; line-height:1.4; box-shadow:0 6px 20px rgb(0 0 0 / .18)}
+.pop b{font-family:var(--mono); display:block; font-size:12px; margin-bottom:2px}
+.tip{position:fixed; z-index:31; pointer-events:none; background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:12px; padding:5px 8px; border-radius:7px; white-space:nowrap}
+
+.quiz{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+.quiz label{display:flex; flex-direction:column; gap:3px; font-family:var(--mono); font-size:11.5px; color:var(--muted); min-width:0}
+.quiz select{font:inherit; font-family:var(--sans); font-size:13px; padding:5px 6px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); width:100%}
+.quiz select.right{border-color:var(--good); box-shadow:0 0 0 1px var(--good)}
+.quiz select.wrong{border-color:var(--warn); box-shadow:0 0 0 1px var(--warn)}
+.legend{display:flex; flex-wrap:wrap; gap:6px}
+
+.finds{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+.find{border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.find .n{font-family:var(--mono); font-size:11px; color:var(--accent)}
+.find h3{margin:0; font-size:16px; line-height:1.3; text-wrap:balance}
+.find p{margin:0; font-size:13.5px; color:var(--ink-2)}
+.recap{display:flex; flex-wrap:wrap; gap:4px; align-items:center; font-family:var(--mono); font-size:12px}
+.recap span{padding:3px 8px; border-radius:6px; background:var(--accent-soft); color:var(--accent)}
+.recap em{font-style:normal; color:var(--muted)}
+.ref{font-size:13px; color:var(--ink-2)} .ref a{color:var(--accent)}
+.note{font-size:12.5px; color:var(--muted)}
+
+.pager{display:flex; justify-content:space-between; gap:10px; margin-top:16px}
+.pager .btn.ghost{min-width:96px}
+.pulse{animation:pulse 1.6s ease-out 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--accent)}100%{box-shadow:0 0 0 10px transparent}}
+@media (prefers-reduced-motion: reduce){ .pulse{animation:none} }
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr); gap:14px}
+  .rail{position:static}
+  .rail ol{flex-direction:row; overflow-x:auto; gap:4px; padding-bottom:4px; margin-top:10px}
+  .rail ol::before{display:none}
+  .rail li button{padding:4px 8px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); width:auto}
+  .rail .nm{white-space:nowrap; font-size:12.5px} .rail .nm small{display:none}
+  .dot{width:22px; height:22px; font-size:10px}
+  .lang{margin-top:8px}
+}
+@media (max-width:640px){
+  .grid2,.story,.finds{grid-template-columns:minmax(0,1fr)}
+  .quiz{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tiles{grid-template-columns:repeat(3,minmax(0,1fr))} .tile b{font-size:18px}
+  .panel{padding:14px}
+}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">Single-cell Lab<b>COVID-19 혈액 면역세포 분석</b></div>
+    <ol id="rail"></ol>
+    <div class="lang">Code <div class="seg" id="langSeg"><button data-l="seurat">Seurat</button><button data-l="scanpy">Scanpy</button></div></div>
+  </aside>
+  <main>
+    <div id="stage"></div>
+    <nav class="pager"><button class="btn ghost" id="prev">← 이전</button><button class="btn" id="next">다음 →</button></nav>
+  </main>
+</div>
+<div id="tip" class="tip" hidden></div>
+<div id="pop" class="pop" hidden></div>
+
+<script>
+/* ---------- seeded data ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=mulberry32(20200715);
+const gauss=()=>{let u=0,v=0;while(!u)u=R();while(!v)v=R();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hash=(n)=>{n=Math.imul(n^0x9e3779b9,0x85ebca6b);n^=n>>>13;n=Math.imul(n,0xc2b2ae35);n^=n>>>16;return(n>>>0)/4294967296};
+
+const TYPES=[
+ {k:'T',    name:'T cell',          col:'--c1', c:[-3.5,2.5], sd:[1.3,.9],  H:42, C:37},
+ {k:'NK',   name:'NK cell',         col:'--c4', c:[-0.5,5.8], sd:[.7,.6],   H:12, C:5},
+ {k:'B',    name:'B cell',          col:'--c3', c:[4.2,4.6],  sd:[.8,.7],   H:10, C:9},
+ {k:'PB',   name:'Plasmablast',     col:'--c6', c:[6.8,2.0],  sd:[.45,.45], H:1,  C:7},
+ {k:'M14',  name:'CD14 Mono',       col:'--c2', c:[3.2,-2.6], sd:[1.0,.85], H:22, C:26},
+ {k:'M16',  name:'CD16 Mono',       col:'--c5', c:[6.4,-4.6], sd:[.55,.5],  H:8,  C:2},
+ {k:'pDC',  name:'pDC',             col:'--c7', c:[-5.2,-3.8],sd:[.4,.4],   H:3,  C:.8},
+ {k:'Neut', name:'Dev. Neutrophil', col:'--c8', c:[-0.4,-5.6],sd:[.8,.55],  H:.6, C:13},
+];
+const SH={T:'T',NK:'NK',B:'B',PB:'PB',M14:'Mono14',M16:'Mono16',pDC:'pDC',Neut:'Neut'};
+const SH2={T:['T cell'],NK:['NK'],B:['B cell'],PB:['Plasma','blast'],M14:['CD14','Mono'],M16:['CD16','Mono'],pDC:['pDC'],Neut:['Dev.','Neut']};
+const TI=Object.fromEntries(TYPES.map((t,i)=>[t.k,i]));
+const cells=[]; // good cells
+const qc=[];    // all cells incl. bad, for QC plot
+['H','C'].forEach(cond=>{
+  TYPES.forEach((t,ti)=>{
+    const n=Math.round(t[cond]/100*500);
+    for(let j=0;j<n;j++){
+      const gx=gauss(),gy=gauss();
+      const ux=t.c[0]+gx*t.sd[0], uy=t.c[1]+gy*t.sd[1];
+      const c={cond,t:ti,ux,uy,
+        px:t.c[0]*.55+gauss()*1.25, py:t.c[1]*.45+gauss()*1.25,
+        bx:gauss(), by:gauss(), id:cells.length};
+      cells.push(c);
+      qc.push({kind:'good', g:clamp(2100+gauss()*480,700,3900), m:clamp(Math.abs(4+gauss()*1.6),.4,9.5)});
+    }
+  });
+  for(let j=0;j<35;j++) qc.push({kind:'dead', g:250+R()*1050, m:12+R()*23});
+  for(let j=0;j<10;j++) qc.push({kind:'dbl',  g:4200+R()*2300, m:2+R()*4});
+});
+
+/* expression model: [mean(log), pct] */
+const EX={
+  CD3E:{T:[2.5,.9],NK:[.3,.12]},
+  NKG7:{NK:[3,.95],T:[.9,.3]},
+  MS4A1:{B:[2.5,.85],PB:[.5,.2]},
+  JCHAIN:{PB:[3,.95],B:[.3,.08]},
+  CD14:{M14:[2.8,.9],M16:[.6,.25],Neut:[.5,.2]},
+  FCGR3A:{M16:[2.8,.9],NK:[1.8,.7],M14:[.3,.12]},
+  LILRA4:{pDC:[2.8,.9]},
+  LTF:{Neut:[3,.9]},
+  ACTB:{_:[2.0,.92]}, 'MT-CO1':{_:[1.2,.7]}, LYZ:{M14:[3,.95],M16:[2.2,.8],Neut:[1.2,.5],pDC:[.4,.2]}
+};
+const MARKERS=['CD3E','NKG7','MS4A1','JCHAIN','CD14','FCGR3A','LILRA4','LTF'];
+const ex=(gene,tk)=>{const g=EX[gene]; return g[tk]||g._||[.05,.03]};
+const cellExpr=(c,gi,gene)=>{const [m,p]=ex(gene,TYPES[c.t].k); return hash(c.id*97+gi*7919)<p ? m*(.55+.9*hash(c.id*31+gi*131+7)) : 0};
+
+/* ---------- state ---------- */
+const S={step:0,done:new Set(),mito:10,maxG:4000,norm:false,nHVG:20,nPC:10,umapRun:false,res:null,gene:'CD3E',ans:{},annot:false,compView:'pct',hiType:null,de:false,deGroup:null,lang:'seurat',loaded:false};
+try{const l=localStorage.getItem('sclab-lang'); if(l) S.lang=l}catch(e){}
+
+/* ---------- colors ---------- */
+let COL={};
+const KEYS=['--bg','--surface','--surface-2','--ink','--ink-2','--muted','--line','--accent','--accent-soft','--healthy','--covid','--up','--down','--seq0','--seq1','--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8'];
+function refreshColors(){const cs=getComputedStyle(document.documentElement);KEYS.forEach(k=>COL[k]=cs.getPropertyValue(k).trim())}
+const hex2rgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255]};
+const mix=(a,b,t)=>{const A=hex2rgb(a),B=hex2rgb(b);return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`};
+const seq=t=>mix(COL['--seq0'],COL['--seq1'],clamp(t,0,1));
+
+/* ---------- clusters ---------- */
+const CL={};
+function clusters(res){
+  if(CL[res]) return CL[res];
+  // groups of (type, sub) -> cluster
+  const keyOf=c=>{
+    const k=TYPES[c.t].k;
+    if(res===0.1){ if(k==='T'||k==='NK') return 'T'; if(k==='M14'||k==='M16') return 'M14'; if(k==='B'||k==='PB') return 'B'; return k; }
+    if(res===1.5){ const t=TYPES[c.t];
+      if(k==='T') return 'T#'+(c.ux<t.c[0]-.5?0:c.ux>t.c[0]+.5?2:1);
+      if(k==='M14') return 'M14#'+(c.uy>t.c[1]?0:1);
+      if(k==='B') return 'B#'+(c.ux>t.c[0]?0:1);
+    }
+    return k;
+  };
+  const cnt={}; cells.forEach(c=>{const k=keyOf(c);cnt[k]=(cnt[k]||0)+1});
+  const order=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  const id=Object.fromEntries(order.map((k,i)=>[k,i]));
+  const lab=cells.map(c=>id[keyOf(c)]);
+  const info=order.map(k=>{const [base,sb]=k.split('#'); const sub=sb?+sb:0; return {k,base,sub,col:TYPES[TI[base]].col}});
+  return CL[res]={lab,info,n:order.length};
+}
+const MID=()=>clusters(0.5);
+
+/* ---------- tooltip / popover ---------- */
+const tip=document.getElementById('tip'), pop=document.getElementById('pop');
+function showTip(x,y,html){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth;tip.style.left=Math.min(x+14,innerWidth-w-8)+'px';tip.style.top=(y-34)+'px'}
+const hideTip=()=>tip.hidden=true;
+document.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('[data-tip]'); if(t) showTip(e.clientX,e.clientY,t.dataset.tip); else if(!e.target.closest('canvas')) hideTip()});
+
+const GL={
+ 'PBMC':'혈액에서 뽑은 면역세포 (T, B, NK, monocyte…)',
+ 'scRNA-seq':'세포 하나하나의 RNA를 따로 읽는 기술',
+ 'count matrix':'행 = gene, 열 = cell, 칸 = RNA 개수 (UMI)',
+ 'sparse':'대부분이 0인 데이터',
+ 'nFeature':'한 세포에서 1번 이상 잡힌 유전자 수',
+ 'percent.mt':'RNA 중 mitochondria 유전자 비율. 높으면 세포가 터졌을 가능성',
+ 'doublet':'세포 2개가 한 방울에 같이 들어가 1개처럼 보이는 것',
+ 'log1p':'log(x+1). 큰 값은 줄이고 0은 0으로 둔다',
+ 'HVG':'Highly Variable Gene. 세포마다 값이 크게 달라지는 유전자',
+ 'PCA':'많은 변수를 몇 개의 핵심 축으로 요약',
+ 'elbow':'그래프가 꺾여 평평해지는 지점. 그 뒤 PC는 거의 noise',
+ 'UMAP':'고차원 데이터를 2D 지도로. 가까우면 비슷한 세포',
+ 'kNN':'세포마다 가장 비슷한 k개 이웃을 연결한 그래프',
+ 'Leiden':'그래프에서 끈끈하게 뭉친 무리를 찾는 알고리즘',
+ 'resolution':'높을수록 cluster를 더 잘게 쪼갠다',
+ 'marker gene':'특정 세포 종류에서만 켜지는 유전자',
+ 'DE':'Differential Expression. 두 그룹의 유전자 발현 차이',
+ 'log2FC':'log2(COVID ÷ Healthy). +1 = 2배↑, −1 = 절반',
+ 'HLA class II':'병원체 조각을 T cell에게 보여주는 단백질 (HLA-DR 등)',
+ 'ISG':'Interferon-Stimulated Gene. 바이러스 경보가 울리면 켜짐',
+ 'cytokine storm':'염증 신호물질이 폭발적으로 쏟아지는 상태',
+ 'ARDS':'급성 호흡곤란 증후군. 가장 심한 COVID-19 폐 손상',
+ 'Plasmablast':'항체를 대량 생산하는 B cell 단계',
+ 'Dev. Neutrophil':'덜 자란 호중구. 건강한 혈액엔 거의 없음'
+};
+const T=(k,label)=>`<button class="tt" data-k="${k}">${label||k}</button>`;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.tt');
+  if(b){const r=b.getBoundingClientRect();pop.innerHTML=`<b>${b.dataset.k}</b>${GL[b.dataset.k]}`;pop.hidden=false;
+    const w=pop.offsetWidth;pop.style.left=clamp(r.left,8,innerWidth-w-8)+'px';pop.style.top=(r.bottom+6)+'px';e.stopPropagation();return}
+  pop.hidden=true;
+});
+addEventListener('scroll',()=>pop.hidden=true,{passive:true});
+
+/* ---------- canvas scatter ---------- */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function scatter(cv,cfg){
+  const W=cv.clientWidth,H=cv.clientHeight; if(!W) return;
+  const dpr=devicePixelRatio||1; cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const pad=cfg.ticks?{l:46,r:12,t:12,b:38}:{l:22,r:10,t:10,b:22};
+  const [x0,x1]=cfg.xd,[y0,y1]=cfg.yd;
+  const X=v=>pad.l+(v-x0)/(x1-x0)*(W-pad.l-pad.r), Y=v=>H-pad.b-(v-y0)/(y1-y0)*(H-pad.t-pad.b);
+  g.font='11px "IBM Plex Mono", monospace'; g.lineWidth=1;
+  if(cfg.ticks){
+    g.strokeStyle=COL['--line']; g.fillStyle=COL['--muted'];
+    cfg.xt.forEach(v=>{g.beginPath();g.moveTo(X(v),pad.t);g.lineTo(X(v),H-pad.b);g.stroke();g.textAlign='center';g.fillText(cfg.xf?cfg.xf(v):v,X(v),H-pad.b+14)});
+    cfg.yt.forEach(v=>{g.beginPath();g.moveTo(pad.l,Y(v));g.lineTo(W-pad.r,Y(v));g.stroke();g.textAlign='right';g.fillText(v,pad.l-6,Y(v)+4)});
+  }
+  g.fillStyle=COL['--muted']; g.textAlign='center';
+  g.fillText(cfg.xl||'',pad.l+(W-pad.l-pad.r)/2,H-6);
+  g.save(); g.translate(11,pad.t+(H-pad.t-pad.b)/2); g.rotate(-Math.PI/2); g.fillText(cfg.yl||'',0,0); g.restore();
+  (cfg.zones||[]).forEach(z=>{g.fillStyle=z.c;g.globalAlpha=.08;g.fillRect(X(z.x0),Y(z.y1),X(z.x1)-X(z.x0),Y(z.y0)-Y(z.y1));g.globalAlpha=1});
+  (cfg.pts||[]).forEach(p=>{g.globalAlpha=p.a??.8;g.fillStyle=p.c;g.beginPath();g.arc(X(p.x),Y(p.y),p.r||2.5,0,6.2832);g.fill()});
+  g.globalAlpha=1;
+  (cfg.lines||[]).forEach(l=>{g.strokeStyle=l.c;g.lineWidth=2;g.setLineDash([5,4]);g.beginPath();
+    if(l.x!=null){g.moveTo(X(l.x),pad.t);g.lineTo(X(l.x),H-pad.b)}else{g.moveTo(pad.l,Y(l.y));g.lineTo(W-pad.r,Y(l.y))}
+    g.stroke();g.setLineDash([]);g.lineWidth=1;
+    if(l.t){g.fillStyle=l.c;g.textAlign=l.x!=null?'left':'right';g.font='600 11px "IBM Plex Mono", monospace';
+      if(l.x!=null)g.fillText(l.t,X(l.x)+4,pad.t+12);else g.fillText(l.t,W-pad.r-4,Y(l.y)-5)}
+    g.font='11px "IBM Plex Mono", monospace'});
+  (cfg.labels||[]).forEach(L=>{
+    g.font=`600 ${L.s||11}px "IBM Plex Sans KR", sans-serif`; const tw=g.measureText(L.t).width, x=X(L.x), y=Y(L.y);
+    g.fillStyle=COL['--surface']; g.globalAlpha=.88; g.beginPath(); g.roundRect?g.roundRect(x-tw/2-5,y-9,tw+10,18,9):g.rect(x-tw/2-5,y-9,tw+10,18); g.fill(); g.globalAlpha=1;
+    g.fillStyle=COL['--ink']; g.textAlign='center'; g.fillText(L.t,x,y+4);
+  });
+  cv._hit={pts:cfg.pts||[],X,Y};
+}
+function hoverable(cv){
+  cv.addEventListener('pointermove',e=>{
+    const h=cv._hit; if(!h) return; const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top;
+    let best=null,bd=144; for(const p of h.pts){ if(!p.tip) continue; const dx=h.X(p.x)-mx,dy=h.Y(p.y)-my,d=dx*dx+dy*dy; if(d<bd){bd=d;best=p} }
+    best?showTip(e.clientX,e.clientY,best.tip):hideTip();
+  });
+  cv.addEventListener('pointerleave',hideTip);
+}
+const UD={xd:[-8,9],yd:[-8,8.2],xl:'UMAP_1',yl:'UMAP_2'};
+const blur=()=>S.nPC<=2?1.7:S.nPC<=4?1.0:S.nPC<=6?.45:0;
+const upos=c=>{const b=blur();return[c.ux+c.bx*b,c.uy+c.by*b]};
+const centroid=(idx)=>{let x=0,y=0;idx.forEach(c=>{x+=c.ux;y+=c.uy});return[x/idx.length,y/idx.length]};
+
+/* ---------- small svg helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const boxW=el=>Math.max(280,el.clientWidth||el.parentElement.clientWidth||300);
+const pct=v=>(v*100).toFixed(1)+'%';
+
+/* ---------- code snippets ---------- */
+const CODE=[
+ ()=>['obj <- CreateSeuratObject(counts)','adata = sc.read_10x_mtx(path)'],
+ ()=>[`obj <- subset(obj, nFeature_RNA > 500 & nFeature_RNA < ${S.maxG} & percent.mt < ${S.mito})`,`adata = adata[(adata.obs.n_genes_by_counts > 500) & (adata.obs.n_genes_by_counts < ${S.maxG}) & (adata.obs.pct_counts_mt < ${S.mito})]`],
+ ()=>['obj <- NormalizeData(obj, normalization.method = "LogNormalize", scale.factor = 1e4)','sc.pp.normalize_total(adata, target_sum=1e4); sc.pp.log1p(adata)'],
+ ()=>['obj <- FindVariableFeatures(obj, nfeatures = 2000)','sc.pp.highly_variable_genes(adata, n_top_genes=2000)'],
+ ()=>['obj <- ScaleData(obj); obj <- RunPCA(obj); ElbowPlot(obj)','sc.pp.scale(adata); sc.tl.pca(adata); sc.pl.pca_variance_ratio(adata)'],
+ ()=>[`obj <- RunUMAP(obj, dims = 1:${S.nPC})`,`sc.pp.neighbors(adata, n_pcs=${S.nPC}); sc.tl.umap(adata)`],
+ ()=>[`obj <- FindNeighbors(obj, dims = 1:${S.nPC}); obj <- FindClusters(obj, resolution = ${S.res??0.5})`,`sc.tl.leiden(adata, resolution=${S.res??0.5})`],
+ ()=>['markers <- FindAllMarkers(obj); DotPlot(obj, features = genes)',"sc.tl.rank_genes_groups(adata, 'leiden'); sc.pl.dotplot(adata, genes, 'leiden')"],
+ ()=>['prop.table(table(obj$celltype, obj$condition), margin = 2)',"pd.crosstab(adata.obs.celltype, adata.obs.condition, normalize='columns')"],
+ ()=>['FindMarkers(mono, ident.1 = "COVID", ident.2 = "Healthy")',"sc.tl.rank_genes_groups(mono, 'condition', reference='Healthy')"],
+ null
+];
+
+/* ---------- steps ---------- */
+const STEPS=[];
+function story(doT,seeT,nextT,done){
+  return `<div class="story">
+   <div class="card do"><span class="tag">DO</span><p>${doT}</p></div>
+   <div class="card see ${done?'':'locked'}"><span class="tag">SEE</span><p>${done?seeT:'▶ 버튼을 눌러 결과 보기'}</p></div>
+   <div class="card next ${done?'':'locked'}"><span class="tag">NEXT</span><p>${done?nextT:'—'}</p></div></div>`;
+}
+function setStory(el,doT,seeT,nextT){el.querySelector('.story').outerHTML=story(doT,seeT,nextT,S.done.has(S.step))}
+
+/* 0. DATA */
+STEPS.push({k:'Data',ko:'데이터',title:'질문 & Data',
+ build(el){
+  el.innerHTML=`
+   <div class="qbox"><div class="q">COVID-19 중증 환자의 혈액 면역세포는<br>건강한 사람과 뭐가 다를까?</div>
+    <div class="meta"><span class="chip">Wilk et al. · Nature Medicine · 2020</span><span class="chip">${T('PBMC')}</span><span class="chip">${T('scRNA-seq')} (Seq-Well)</span></div></div>
+   <div class="grid2">
+     <div class="fig"><div class="cap"><span>실제 샘플</span><span>→ 여기선 단순화</span></div>
+       <div class="svgbox" id="samp"></div></div>
+     <div class="fig" style="display:flex;flex-direction:column;gap:10px;justify-content:center">
+       <button class="btn" id="load">Load ${'count matrix'} <span class="k">CreateSeuratObject()</span></button>
+       <div class="tiles" id="tiles"></div></div>
+   </div>
+   <div class="fig" id="mtxfig" ${S.loaded?'':'hidden'}><div class="cap"><span>${T('count matrix')} 일부 · gene × cell</span><span>칸 = RNA 개수</span></div><div class="mtx" id="mtx"></div></div>
+   ${story(`혈액에서 세포를 뽑아 세포마다 RNA 개수를 셌다 → ${T('count matrix')}`,`대부분 칸이 0 (${T('sparse')}). 이상한 세포도 섞여 있다.`,'나쁜 세포부터 걸러낸다 → <b>QC</b>',S.done.has(0))}`;
+  el.querySelector('#load').onclick=()=>{S.loaded=true;S.done.add(0);this.build(el);this.draw();markRail()};
+ },
+ draw(){
+  const box=document.getElementById('samp'); const W=boxW(box), H=150;
+  const row=(y,label,n,cls,show)=>{let s=`<text x="0" y="${y+5}" class="strong">${label}</text>`;
+    for(let i=0;i<n;i++){const x=78+i*Math.min(26,(W-150)/7);s+=`<g data-tip="${label} 환자 ${i+1}"><circle cx="${x}" cy="${y-6}" r="6" fill="var(${cls})"/><path d="M${x-9} ${y+14} q9 -14 18 0" fill="var(${cls})"/></g>`}
+    s+=`<text x="${W}" y="${y+5}" text-anchor="end" class="lbl">${show}</text>`;return s};
+  box.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${row(40,'Healthy',6,'--healthy','~500 cells')}${row(108,'COVID',7,'--covid','~500 cells')}</svg>`;
+  const tiles=document.getElementById('tiles');
+  tiles.innerHTML=S.loaded?`<div class="tile"><b>${qc.length.toLocaleString()}</b><span>cells</span></div><div class="tile"><b>~20k</b><span>genes</span></div><div class="tile"><b>~92%</b><span>zeros</span></div>`
+   :`<div class="tile"><b>—</b><span>cells</span></div><div class="tile"><b>—</b><span>genes</span></div><div class="tile"><b>—</b><span>zeros</span></div>`;
+  if(!S.loaded) return;
+  const genes=['CD3E','LYZ','MS4A1','NKG7','ACTB','MT-CO1','LTF','JCHAIN'];
+  const pick=[0,40,400,250,520,600,700,860,950,980,130,320].map(i=>cells[Math.min(i,cells.length-1)]);
+  let t='<table><tr><th></th>'+pick.map((_,i)=>`<th>c${i+1}</th>`).join('')+'</tr>';
+  genes.forEach((gname,gi)=>{t+=`<tr><th>${gname}</th>`+pick.map(c=>{const v=cellExpr(c,gi+20,gname);const n=v?Math.max(1,Math.round(v*v*1.6)):0;
+    return `<td style="background:${n?seq(.18+n/16):'var(--surface-2)'};color:${n>7?'var(--surface)':n?'var(--ink)':'var(--muted)'}" data-tip="${gname} · c${pick.indexOf(c)+1} = ${n}">${n}</td>`}).join('')+'</tr>'});
+  document.getElementById('mtx').innerHTML=t+'</table>';
+ }});
+
+/* 1. QC */
+STEPS.push({k:'QC',ko:'품질 검사',title:'Quality Control',
+ build(el){
+  el.innerHTML=`
+   <div class="controls">
+     <label class="ctl" for="sMito">percent.mt &lt; <input type="range" id="sMito" min="3" max="30" step="1" value="${S.mito}"><output id="oMito">${S.mito}%</output></label>
+     <label class="ctl" for="sG">nFeature &lt; <input type="range" id="sG" min="2500" max="7000" step="100" value="${S.maxG}"><output id="oG">${S.maxG}</output></label>
+     <button class="btn" id="apply">Filter cells</button>
+   </div>
+   <div class="fig"><div class="cap"><span>cell 1개 = 점 1개</span><span id="qcn"></span></div><canvas class="plot" id="cvQC" style="aspect-ratio:16/8"></canvas></div>
+   <div class="chips" id="qcChips"></div>
+   ${story(`세포마다 ${T('nFeature')}와 ${T('percent.mt')} 계산 → 기준선 밖은 제거`,'위쪽 = 터진 세포 (mt↑). 오른쪽 = '+T('doublet')+'. 기준이 너무 빡빡하면 정상 세포도 잘린다.','남은 세포의 sequencing 깊이를 맞춘다 → <b>Normalize</b>',S.done.has(1))}`;
+  const upd=()=>{S.mito=+el.querySelector('#sMito').value;S.maxG=+el.querySelector('#sG').value;el.querySelector('#oMito').textContent=S.mito+'%';el.querySelector('#oG').textContent=S.maxG;this.draw();renderCode()};
+  el.querySelector('#sMito').oninput=upd; el.querySelector('#sG').oninput=upd;
+  el.querySelector('#apply').onclick=()=>{S.done.add(1);this.build(el);this.draw();markRail()};
+  hoverable(el.querySelector('#cvQC'));
+ },
+ draw(){
+  const keep=p=>p.g>500&&p.g<S.maxG&&p.m<S.mito;
+  const KIND={good:'정상 cell',dead:'죽어가는 cell',dbl:'doublet'};
+  const pts=qc.map(p=>({x:p.g,y:p.m,c:keep(p)?COL['--accent']:COL['--muted'],a:keep(p)?.75:.45,r:2.4,tip:`${S.done.has(1)?KIND[p.kind]+' · ':''}${Math.round(p.g)} genes · mt ${p.m.toFixed(1)}%`}));
+  scatter(document.getElementById('cvQC'),{pts,xd:[0,7000],yd:[0,36],ticks:true,xt:[0,1000,2000,3000,4000,5000,6000,7000],yt:[0,10,20,30],xf:v=>v?v/1000+'k':0,
+    xl:'nFeature_RNA (검출된 gene 수)',yl:'percent.mt',
+    lines:[{x:500,c:COL['--muted']},{x:S.maxG,c:COL['--covid'],t:'max'},{y:S.mito,c:COL['--covid'],t:'mt cut'}]});
+  const kept=qc.filter(keep).length, deadIn=qc.filter(p=>p.kind==='dead'&&keep(p)).length, dblIn=qc.filter(p=>p.kind==='dbl'&&keep(p)).length, lost=qc.filter(p=>p.kind==='good'&&!keep(p)).length;
+  document.getElementById('qcn').textContent=`${qc.length} → ${kept} cells`;
+  document.getElementById('qcChips').innerHTML=
+   `<span class="chip"><i style="background:var(--accent)"></i>keep ${kept}</span><span class="chip"><i style="background:var(--muted)"></i>remove ${qc.length-kept}</span>`+
+   (S.done.has(1)?`<span class="chip ${deadIn?'bad':'ok'}">${deadIn?'!':'✓'} 죽은 cell 남음 ${deadIn}</span><span class="chip ${dblIn?'bad':'ok'}">${dblIn?'!':'✓'} doublet 남음 ${dblIn}</span><span class="chip ${lost>15?'bad':'ok'}">${lost>15?'!':'✓'} 정상 cell 손실 ${lost}</span>`:'');
+ }});
+
+/* 2. NORMALIZE */
+STEPS.push({k:'Normalize',ko:'정규화',title:'Normalize',
+ build(el){
+  el.innerHTML=`
+   <div class="controls"><div class="seg" id="nSeg"><button data-v="0">Raw count</button><button data-v="1">Normalize + log1p</button></div></div>
+   <div class="grid2"><div class="fig"><div class="cap"><span>세포별 총 count</span><span id="cap1"></span></div><div class="svgbox" id="nb1"></div></div>
+     <div class="fig"><div class="cap"><span>CD3E (T cell 유전자)</span><span id="cap2"></span></div><div class="svgbox" id="nb2"></div></div></div>
+   ${story(`세포마다 총 count를 10,000으로 맞추고 ${T('log1p')}`,'Raw에선 Cell B가 CD3E 4배? → 정규화하니 셋 다 같다. 차이는 깊이 차이였다.','정보 많은 유전자만 고른다 → <b>HVG</b>',S.done.has(2))}`;
+  el.querySelectorAll('#nSeg button').forEach(b=>b.onclick=()=>{S.norm=b.dataset.v==='1';if(S.norm&&!S.done.has(2)){S.done.add(2);this.build(el);markRail()}this.draw()});
+ },
+ draw(){
+  document.querySelectorAll('#nSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.v==='1')===S.norm));
+  const cellsN=[['Cell A',1200,6],['Cell B',4800,24],['Cell C',2400,12]];
+  const bars=(box,vals,max,unit,fmt)=>{const W=boxW(box),H=170,l=56,b=26,bw=Math.min(54,(W-l-20)/5);
+    let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+    [0,.5,1].forEach(f=>{const y=H-b-f*(H-b-14);s+=`<line class="ax" x1="${l}" x2="${W}" y1="${y}" y2="${y}"/><text x="${l-6}" y="${y+4}" text-anchor="end" class="lbl">${fmt(max*f)}</text>`});
+    vals.forEach((v,i)=>{const x=l+20+i*((W-l-20)/3),hgt=v/max*(H-b-14);
+      s+=`<rect data-tip="${cellsN[i][0]} · ${fmt(v)} ${unit}" x="${x}" y="${H-b-hgt}" width="${bw}" height="${Math.max(hgt,0)}" rx="4" fill="var(--c${i===1?1:i===0?3:7})"/><text x="${x+bw/2}" y="${H-b-hgt-6}" text-anchor="middle" class="strong">${fmt(v)}</text><text x="${x+bw/2}" y="${H-8}" text-anchor="middle">${cellsN[i][0]}</text>`});
+    box.innerHTML=s+'</svg>'};
+  if(!S.norm){bars(document.getElementById('nb1'),cellsN.map(c=>c[1]),5000,'UMI',v=>Math.round(v).toLocaleString());bars(document.getElementById('nb2'),cellsN.map(c=>c[2]),25,'UMI',v=>Math.round(v));
+    document.getElementById('cap1').textContent='제각각';document.getElementById('cap2').textContent='raw UMI';}
+  else{bars(document.getElementById('nb1'),[1e4,1e4,1e4],1e4,'',v=>Math.round(v).toLocaleString());bars(document.getElementById('nb2'),cellsN.map(c=>Math.log1p(c[2]/c[1]*1e4)),4,'',v=>v.toFixed(2));
+    document.getElementById('cap1').textContent='모두 10,000';document.getElementById('cap2').textContent='log1p(x/total×10⁴)';}
+ }});
+
+/* 3. HVG */
+const GENES=(()=>{const a=[];const named={CD3E:[.3,7.2],NKG7:[.45,8.4],MS4A1:[-.1,6.6],JCHAIN:[-.2,7.8],CD14:[.2,6.9],FCGR3A:[.1,6.2],LILRA4:[-.9,5.4],LTF:[-.5,8.9],LYZ:[1.1,9.4],GNLY:[.5,7.6],S100A8:[.9,8.1],'HLA-DRA':[.95,5.1],IFI27:[-.4,4.6]};
+  Object.entries(named).forEach(([n,[x,y]])=>a.push({n,x,y,lab:true}));
+  [['ACTB',1.6,.8],['GAPDH',1.3,.9],['B2M',1.8,1.0],['RPL13',1.5,.7],['MALAT1',1.9,1.1]].forEach(([n,x,y])=>a.push({n,x,y,lab:true,hk:true}));
+  for(let i=0;i<260;i++){const x=-1.6+R()*3.2;a.push({n:'gene_'+(i+1),x,y:clamp(.9+Math.abs(gauss())*.55+(R()<.08?R()*2.6:0),.3,4.4)})}
+  return a.sort((p,q)=>q.y-p.y)})();
+STEPS.push({k:'HVG',ko:'유전자 선택',title:'Highly Variable Genes',
+ build(el){
+  el.innerHTML=`
+   <div class="controls"><label class="ctl" for="sH">top <input type="range" id="sH" min="5" max="60" value="${S.nHVG}"><output id="oH">${S.nHVG}</output> genes</label>
+   <button class="btn" id="hvgBtn">Find HVG</button></div>
+   <div class="fig"><div class="cap"><span>gene 1개 = 점 1개</span><span>실제로는 ~20,000개 중 2,000개 선택</span></div><canvas class="plot" id="cvH" style="aspect-ratio:16/8"></canvas></div>
+   <div class="chips"><span class="chip"><i style="background:var(--accent)"></i>${T('HVG')}</span><span class="chip"><i style="background:var(--muted)"></i>나머지</span></div>
+   ${story('세포마다 값이 크게 달라지는 유전자만 고른다','ACTB · GAPDH = 모든 세포에서 비슷 → 정보 없음. CD14 · NKG7 · LTF = 세포마다 다름 → 세포 종류를 알려줌.','수천 차원을 몇 개 축으로 압축 → <b>PCA</b>',S.done.has(3))}`;
+  el.querySelector('#sH').oninput=e=>{S.nHVG=+e.target.value;el.querySelector('#oH').textContent=S.nHVG;this.draw()};
+  el.querySelector('#hvgBtn').onclick=()=>{S.done.add(3);this.build(el);this.draw();markRail()};
+  hoverable(el.querySelector('#cvH'));
+ },
+ draw(){
+  const on=S.done.has(3); const thr=GENES[S.nHVG-1].y;
+  const pts=GENES.map((p,i)=>({x:p.x,y:p.y,r:p.lab?3.6:2.6,c:on&&i<S.nHVG?COL['--accent']:COL['--muted'],a:on&&i<S.nHVG?.9:.45,tip:`${p.n} · variance ${p.y.toFixed(1)}`}));
+  const labels=on?GENES.filter((p,i)=>p.lab&&(i<S.nHVG||p.hk)).map(p=>({x:p.x,y:p.y+.55,t:p.n,s:10})):[];
+  scatter(document.getElementById('cvH'),{pts,labels,xd:[-1.8,2.2],yd:[0,10.2],ticks:true,xt:[-1,0,1,2],yt:[0,2,4,6,8,10],xl:'평균 발현 (log)',yl:'variance (표준화)',lines:on?[{y:thr-.05,c:COL['--accent'],t:`top ${S.nHVG}`}]:[]});
+ }});
+
+/* 4. PCA */
+const VAR=[18,12,8,6,4.5,3.5,2.6,2.0,1.6,1.3,1.1,1.0,.95,.9,.88,.85,.83,.8,.78,.76];
+STEPS.push({k:'PCA',ko:'차원 축소',title:'PCA',
+ build(el){
+  el.innerHTML=`
+   <div class="grid2">
+    <div class="fig"><div class="cap"><span>Elbow plot · 막대 클릭 = PC 개수 선택</span><span id="pcN"></span></div><div class="svgbox" id="elb"></div></div>
+    <div class="fig"><div class="cap"><span>PC1 vs PC2</span><span>아직 세포 종류 모름</span></div><canvas class="plot" id="cvP"></canvas></div>
+   </div>
+   ${story(`HVG 정보를 몇 개의 축(PC)으로 압축 → ${T('elbow')}에서 개수 정하기`,'PC ~10개 이후 막대가 평평 = 나머지는 noise. PC1·PC2만으론 그룹이 흐릿하다.',`고른 PC로 2D 지도를 그린다 → <b>UMAP</b>`,S.done.has(4))}`;
+  hoverable(el.querySelector('#cvP'));
+ },
+ draw(){
+  const box=document.getElementById('elb'),W=boxW(box),H=220,l=34,b=30,bw=(W-l-8)/VAR.length;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  [0,5,10,15,20].forEach(v=>{const y=H-b-v/20*(H-b-12);s+=`<line class="ax" x1="${l}" x2="${W}" y1="${y}" y2="${y}"/><text x="${l-5}" y="${y+4}" text-anchor="end" class="lbl">${v}</text>`});
+  VAR.forEach((v,i)=>{const x=l+i*bw,hh=v/20*(H-b-12),sel=i<S.nPC;
+    s+=`<g style="cursor:pointer" data-pc="${i+1}" data-tip="PC${i+1} · ${v}% 설명"><rect x="${x}" y="12" width="${bw}" height="${H-b-12}" fill="transparent"/><rect x="${x+1}" y="${H-b-hh}" width="${bw-2}" height="${hh}" rx="3" fill="${sel?'var(--accent)':'var(--line)'}"/></g>`;
+    if(i%2===0||W>420) s+=`<text x="${x+bw/2}" y="${H-b+14}" text-anchor="middle" class="lbl" style="font-size:10px">${i+1}</text>`});
+  s+=`<text x="${l+(W-l)/2}" y="${H-2}" text-anchor="middle" class="lbl">PC</text><text x="${l+8.5*bw}" y="${H-b-2.6/20*(H-b-12)-40}" class="strong">← elbow</text></svg>`;
+  box.innerHTML=s;
+  box.querySelectorAll('[data-pc]').forEach(g=>g.onclick=()=>{S.nPC=+g.dataset.pc;const first=!S.done.has(4);S.done.add(4);if(first){STEPS[4].build(document.getElementById('body'));markRail()}STEPS[4].draw();renderCode()});
+  document.getElementById('pcN').textContent=`dims = 1:${S.nPC}`;
+  scatter(document.getElementById('cvP'),{pts:cells.map(c=>({x:c.px,y:c.py,c:COL['--ink-2'],a:.4,r:2.2})),xd:[-7,7],yd:[-6.5,6.5],xl:'PC_1',yl:'PC_2'});
+ }});
+
+/* 5. UMAP */
+let anim=null;
+STEPS.push({k:'UMAP',ko:'2D 지도',title:'UMAP',
+ build(el){
+  const warn=S.nPC<=4?`<span class="chip bad">! PC ${S.nPC}개 = 너무 적음 → 섬이 뭉개짐</span>`:`<span class="chip ok">✓ PC ${S.nPC}개 사용</span>`;
+  el.innerHTML=`
+   <div class="controls"><button class="btn" id="run">${S.umapRun?'Re-run':'Run'} UMAP <span class="k">dims 1:${S.nPC}</span></button>${warn}<button class="chip" id="backPC">PC 개수 바꾸기 ↩</button></div>
+   <div class="fig"><div class="cap"><span>cell 1개 = 점 1개</span><span>${S.umapRun?'UMAP':'(PCA 상태)'}</span></div><canvas class="plot" id="cvU" style="aspect-ratio:16/9"></canvas></div>
+   ${story(`비슷한 세포끼리 가까이 놓은 2D 지도 (${T('UMAP')})`,'뚜렷한 섬(island) 8개쯤 = 세포 그룹 후보. 단, 섬 사이 거리는 참고만.','섬에 번호를 붙인다 → <b>Clustering</b>',S.done.has(5))}`;
+  el.querySelector('#run').onclick=()=>{S.umapRun=true;S.done.add(5);this.build(el);markRail();this.animate()};
+  el.querySelector('#backPC').onclick=()=>go(4);
+  hoverable(el.querySelector('#cvU'));
+ },
+ frame(t){
+  const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const pts=cells.map(c=>{const [x,y]=upos(c);return{x:c.px*1.1*(1-e)+x*e,y:c.py*1.1*(1-e)+y*e,c:COL['--ink-2'],a:.45,r:2.3}});
+  scatter(document.getElementById('cvU'),{pts,...UD});
+ },
+ animate(){
+  if(anim) cancelAnimationFrame(anim); if(reduce){this.frame(1);return}
+  const t0=performance.now(); const step=n=>{const t=Math.min(1,(n-t0)/1400);this.frame(t);if(t<1)anim=requestAnimationFrame(step)};
+  this.frame(0); anim=requestAnimationFrame(step);
+ },
+ draw(){this.frame(S.umapRun?1:0)}});
+
+/* 6. CLUSTER */
+STEPS.push({k:'Cluster',ko:'그룹 나누기',title:'Clustering',
+ build(el){
+  el.innerHTML=`
+   <div class="controls"><span class="ctl">${T('resolution')}</span><div class="seg" id="rSeg">${[0.1,0.5,1.5].map(r=>`<button data-r="${r}">${r}</button>`).join('')}</div><span class="chip" id="kN">—</span></div>
+   <div class="fig"><div class="cap"><span>${T('kNN')} graph → ${T('Leiden')}</span><span>숫자 = cluster ID</span></div><canvas class="plot" id="cvC" style="aspect-ratio:16/9"></canvas></div>
+   <div class="chips" id="rMsg"></div>
+   ${story('이웃끼리 연결한 뒤 끈끈한 무리를 cluster로 묶는다','0.1 = 다른 세포가 합쳐짐 · 1.5 = 같은 세포가 쪼개짐 · 0.5 = 섬과 딱 맞는 8개','cluster마다 무슨 세포인지 → <b>Annotation</b>',S.done.has(6))}`;
+  el.querySelectorAll('#rSeg button').forEach(b=>b.onclick=()=>{S.res=+b.dataset.r;const f=!S.done.has(6);S.done.add(6);if(f){this.build(el);markRail()}this.draw();renderCode()});
+  hoverable(el.querySelector('#cvC'));
+ },
+ draw(){
+  document.querySelectorAll('#rSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.r===S.res));
+  if(S.res==null){scatter(document.getElementById('cvC'),{pts:cells.map(c=>{const[x,y]=upos(c);return{x,y,c:COL['--ink-2'],a:.45,r:2.3}}),...UD});return}
+  const C=clusters(S.res);
+  const pts=cells.map((c,i)=>{const[x,y]=upos(c);const inf=C.info[C.lab[i]];return{x,y,c:COL[inf.col],a:inf.sub===1?.4:inf.sub===2?.65:.85,r:2.4,tip:`cluster ${C.lab[i]}`}});
+  const labels=C.info.map((inf,k)=>{const idx=cells.filter((c,i)=>C.lab[i]===k);const[x,y]=centroid(idx);return{x,y,t:String(k),s:12}});
+  scatter(document.getElementById('cvC'),{pts,labels,...UD});
+  document.getElementById('kN').textContent=`${C.n} clusters`;
+  document.getElementById('rMsg').innerHTML=S.res===0.1?'<span class="chip bad">! under-clustering · T+NK, B+Plasmablast가 한 덩어리</span>':S.res===1.5?'<span class="chip bad">! over-clustering · 한 섬이 여러 번호로 쪼개짐</span>':'<span class="chip ok">✓ 섬 1개 = cluster 1개</span>';
+ }});
+
+/* 7. ANNOTATION */
+STEPS.push({k:'Annotate',ko:'세포 이름 붙이기',title:'Annotation',
+ build(el){
+  const M=MID(); const opts=TYPES.map(t=>t.name).sort();
+  el.innerHTML=`
+   <div class="grid2">
+    <div class="fig"><div class="cap"><span>Dot plot · gene 클릭 →</span><span>resolution 0.5</span></div><div class="svgbox" id="dp"></div>
+     <div class="note" style="margin-top:6px">점 크기 = 발현 세포 %, 색 진하기 = 평균 발현</div></div>
+    <div class="fig"><div class="cap"><span>Feature plot</span><span id="fg"></span></div><canvas class="plot sq" id="cvF"></canvas></div>
+   </div>
+   <div class="quiz" id="quiz">${M.info.map((inf,k)=>`<label for="q${k}">cluster ${k}<select id="q${k}" data-k="${k}"><option value="">?</option>${opts.map(o=>`<option ${S.ans[k]===o?'selected':''}>${o}</option>`).join('')}</select></label>`).join('')}</div>
+   <div class="controls"><button class="btn" id="chk">Check</button><button class="btn ghost" id="sol">정답 보기</button><span class="chip" id="score" hidden></span></div>
+   ${story(`cluster마다 많이 켜진 ${T('marker gene')}을 보고 이름 붙이기`,'CD3E → T · NKG7 → NK · MS4A1 → B · JCHAIN → Plasmablast · CD14 / FCGR3A → Monocyte · LILRA4 → pDC · LTF → Neutrophil','Healthy vs COVID 비교 → <b>Composition</b>',S.done.has(7))}`;
+  el.querySelectorAll('#quiz select').forEach(s=>s.onchange=()=>{S.ans[s.dataset.k]=s.value;s.className=''});
+  const check=()=>{let ok=0;el.querySelectorAll('#quiz select').forEach(s=>{const right=TYPES[TI[M.info[s.dataset.k].base]].name;const r=s.value===right;ok+=r;s.className=s.value?(r?'right':'wrong'):''});
+    const sc=el.querySelector('#score');sc.hidden=false;sc.textContent=`${ok} / ${M.n} 정답`;sc.className='chip '+(ok===M.n?'ok':'bad');return ok};
+  el.querySelector('#chk').onclick=()=>{if(check()===M.n){S.annot=true;S.done.add(7);this.build(el);this.draw();check();markRail()}};
+  el.querySelector('#sol').onclick=()=>{M.info.forEach((inf,k)=>S.ans[k]=TYPES[TI[inf.base]].name);S.annot=true;S.done.add(7);this.build(el);this.draw();check();markRail()};
+  hoverable(el.querySelector('#cvF'));
+ },
+ draw(){
+  const M=MID(), box=document.getElementById('dp'), W=boxW(box);
+  const l=62,t=30,cw=(W-l-6)/M.n,rh=27,H=t+MARKERS.length*rh+6;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  M.info.forEach((inf,k)=>{s+=`<text x="${l+cw*k+cw/2}" y="${t-12}" text-anchor="middle" class="strong">${S.annot?SH[inf.base]:k}</text>`});
+  MARKERS.forEach((gname,gi)=>{const y=t+gi*rh+rh/2,sel=gname===S.gene;
+    s+=`<g data-g="${gname}" style="cursor:pointer"><rect x="0" y="${y-rh/2+1}" width="${W}" height="${rh-2}" rx="6" fill="${sel?'var(--accent-soft)':'transparent'}"/><text x="4" y="${y+4}" class="${sel?'strong':''}">${gname}</text>`;
+    M.info.forEach((inf,k)=>{const [m,p]=ex(gname,inf.base);const r=1.5+Math.min(cw,rh)*.4*p;s+=`<circle data-tip="${gname} · cluster ${k} · ${Math.round(p*100)}% · avg ${(m*p).toFixed(2)}" cx="${l+cw*k+cw/2}" cy="${y}" r="${r}" fill="${seq(.12+m*p/2.6)}"/>`});
+    s+='</g>'});
+  box.innerHTML=s+'</svg>';
+  box.querySelectorAll('[data-g]').forEach(g=>g.onclick=()=>{S.gene=g.dataset.g;this.draw()});
+  document.getElementById('fg').textContent=S.gene;
+  const gi=MARKERS.indexOf(S.gene);
+  const pts=cells.map(c=>{const v=cellExpr(c,gi,S.gene);const[x,y]=upos(c);return{x,y,v,c:v?seq(.2+v/3.6):COL['--seq0'],a:v?.9:.7,r:2.3,tip:`${S.gene} = ${v.toFixed(2)}`}}).sort((a,b)=>a.v-b.v);
+  const labels=S.annot?M.info.map((inf,k)=>{const[x,y]=centroid(cells.filter((c,i)=>M.lab[i]===k));return{x,y:y+1.6,t:TYPES[TI[inf.base]].name,s:10}}):[];
+  scatter(document.getElementById('cvF'),{pts,labels,...UD});
+ }});
+
+/* 8. COMPOSITION */
+const prop=(cond)=>{const sub=cells.filter(c=>c.cond===cond);return TYPES.map((t,i)=>sub.filter(c=>c.t===i).length/sub.length)};
+STEPS.push({k:'Compare',ko:'세포 비율 비교',title:'Composition',
+ build(el){
+  el.innerHTML=`
+   <div class="grid2">
+    <div class="fig"><div class="cap"><span style="color:var(--healthy);font-weight:600">● Healthy</span><span>${cells.filter(c=>c.cond==='H').length} cells</span></div><canvas class="plot" id="cvH1"></canvas></div>
+    <div class="fig"><div class="cap"><span style="color:var(--covid);font-weight:600">● COVID-19</span><span>${cells.filter(c=>c.cond==='C').length} cells</span></div><canvas class="plot" id="cvC1"></canvas></div>
+   </div>
+   <div class="legend" id="lg"></div>
+   <div class="controls"><button class="btn" id="cmp" ${S.done.has(8)?'hidden':''}>Count cells per group</button><div class="seg" id="vSeg" ${S.done.has(8)?'':'hidden'}><button data-v="pct">비율 (%)</button><button data-v="fc">변화 (log2 COVID/Healthy)</button></div></div>
+   <div class="fig" ${S.done.has(8)?'':'hidden'}><div class="svgbox" id="bars"></div></div>
+   ${story('그룹별로 세포 종류 비율을 센다','COVID에서 '+T('Dev. Neutrophil')+' 새로 등장, '+T('Plasmablast')+' ↑. NK · CD16 Mono · pDC ↓.','같은 세포 안에서는 뭐가 바뀌었나 → <b>DE</b>',S.done.has(8))}`;
+  el.querySelector('#cmp').onclick=()=>{S.done.add(8);this.build(el);this.draw();markRail()};
+  el.querySelectorAll('#vSeg button').forEach(b=>b.onclick=()=>{S.compView=b.dataset.v;this.draw()});
+  hoverable(el.querySelector('#cvH1'));hoverable(el.querySelector('#cvC1'));
+ },
+ draw(){
+  const lg=document.getElementById('lg');
+  lg.innerHTML=TYPES.map((t,i)=>`<button class="chip" data-t="${i}" aria-pressed="${S.hiType==null||S.hiType===i}"><i style="background:var(${t.col})"></i>${t.name}</button>`).join('');
+  lg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.t;S.hiType=S.hiType===i?null:i;this.draw()});
+  ['H','C'].forEach(cond=>{
+    const pts=cells.filter(c=>c.cond===cond).map(c=>{const[x,y]=upos(c);const on=S.hiType==null||S.hiType===c.t;return{x,y,c:on?COL[TYPES[c.t].col]:COL['--line'],a:on?.85:.5,r:2.3,tip:TYPES[c.t].name}});
+    const labels=S.hiType!=null?[{x:TYPES[S.hiType].c[0],y:TYPES[S.hiType].c[1]+1.7,t:TYPES[S.hiType].name,s:11}]:[{x:TYPES[7].c[0],y:TYPES[7].c[1]+1.5,t:'Dev. Neutrophil',s:10}];
+    scatter(document.getElementById(cond==='H'?'cvH1':'cvC1'),{pts,labels,...UD});
+  });
+  if(!S.done.has(8)) return;
+  document.querySelectorAll('#vSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.compView));
+  const pH=prop('H'),pC=prop('C'),box=document.getElementById('bars'),W=boxW(box),H=250,l=44,b=52,t=14,gw=(W-l-6)/TYPES.length;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  const nameTxt=(i,x)=>SH2[TYPES[i].k].map((w,j)=>`<text x="${x}" y="${H-b+16+j*12}" text-anchor="middle" style="font-size:10.5px" class="${S.hiType===i?'strong':''}">${w}</text>`).join('');
+  if(S.compView==='pct'){
+    const max=.45,Y=v=>H-b-v/max*(H-b-t);
+    [0,.1,.2,.3,.4].forEach(v=>s+=`<line class="ax" x1="${l}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${l-5}" y="${Y(v)+4}" text-anchor="end" class="lbl">${v*100}%</text>`);
+    TYPES.forEach((tp,i)=>{const x=l+i*gw,bw=Math.min(18,gw/2-4),cx=x+gw/2,dim=S.hiType!=null&&S.hiType!==i?' opacity=".3"':'';
+      s+=`<g${dim}><rect data-tip="${tp.name} · Healthy ${pct(pH[i])}" x="${cx-bw-1}" y="${Y(pH[i])}" width="${bw}" height="${Math.max(H-b-Y(pH[i]),1)}" rx="3" fill="var(--healthy)"/>`+
+        `<rect data-tip="${tp.name} · COVID ${pct(pC[i])}" x="${cx+1}" y="${Y(pC[i])}" width="${bw}" height="${Math.max(H-b-Y(pC[i]),1)}" rx="3" fill="var(--covid)"/></g>`+nameTxt(i,cx)});
+    s+=`<g transform="translate(${W-150},${t})"><rect width="9" height="9" rx="2" fill="var(--healthy)"/><text x="13" y="9">Healthy</text><rect x="74" width="9" height="9" rx="2" fill="var(--covid)"/><text x="87" y="9">COVID</text></g>`;
+  }else{
+    const fc=TYPES.map((_,i)=>Math.log2((pC[i]+.005)/(pH[i]+.005)));const lo=-3,hi=5,Y=v=>t+(hi-v)/(hi-lo)*(H-b-t);
+    [-2,0,2,4].forEach(v=>s+=`<line class="ax" x1="${l}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" ${v===0?'style="stroke:var(--muted)"':''}/><text x="${l-5}" y="${Y(v)+4}" text-anchor="end" class="lbl">${v>0?'+':''}${v}</text>`);
+    TYPES.forEach((tp,i)=>{const x=l+i*gw,bw=Math.min(28,gw-12),cx=x+gw/2,v=fc[i],big=Math.abs(v)>=1,dim=S.hiType!=null&&S.hiType!==i?' opacity=".3"':'';
+      const y0=Y(Math.max(v,0)),hh=Math.abs(Y(v)-Y(0));
+      s+=`<g${dim}><rect data-tip="${tp.name} · ${(2**v).toFixed(1)}× (log2 ${v.toFixed(2)})" x="${cx-bw/2}" y="${y0}" width="${bw}" height="${Math.max(hh,1)}" rx="3" fill="${big?(v>0?'var(--up)':'var(--down)'):'var(--line)'}"/>`+
+        (big?`<text x="${cx}" y="${v>0?y0-5:y0+hh+13}" text-anchor="middle" class="strong">${v>0?'↑':'↓'}${(2**Math.abs(v)).toFixed(0)}×</text>`:'')+'</g>'+nameTxt(i,cx)});
+  }
+  box.innerHTML=s+'</svg>';
+ }});
+
+/* 9. DE */
+const DEG=[
+ {g:'HLA-DRA',fc:-1.3,grp:'mhc'},{g:'HLA-DPB1',fc:-1.1,grp:'mhc'},{g:'HLA-DRB1',fc:-1.0,grp:'mhc'},{g:'CD74',fc:-.8,grp:'mhc'},
+ {g:'IFI27',fc:2.6,grp:'isg'},{g:'ISG15',fc:1.9,grp:'isg'},{g:'MX1',fc:1.6,grp:'isg'},{g:'IFITM3',fc:1.4,grp:'isg'},
+ {g:'TNF',fc:.1,grp:'cyt',ns:1},{g:'IL6',fc:0,grp:'cyt',ns:1},{g:'IL1B',fc:-.2,grp:'cyt',ns:1},{g:'CCL3',fc:.15,grp:'cyt',ns:1}];
+const GRP={mhc:['HLA class II','항원제시 ↓ → T cell 도움 약해짐'],isg:['ISG','바이러스 경보 (interferon) ↑'],cyt:['Cytokine','TNF · IL6 · IL1B ≈ 그대로 → 혈액 monocyte가 cytokine storm 주범은 아닐 수도']};
+STEPS.push({k:'DE',ko:'유전자 차이',title:'Differential Expression',
+ build(el){
+  el.innerHTML=`
+   <div class="controls"><span class="chip"><i style="background:var(--c2)"></i>CD14 Mono 안에서</span><span class="chip">COVID vs Healthy</span><button class="btn" id="deBtn" ${S.de?'hidden':''}>FindMarkers</button>
+    <div class="seg" id="gSeg" ${S.de?'':'hidden'}><button data-g="">전체</button><button data-g="mhc">HLA class II</button><button data-g="isg">ISG</button><button data-g="cyt">Cytokine</button></div></div>
+   <div class="fig"><div class="cap"><span>${T('log2FC')}</span><span id="gMsg"></span></div><div class="svgbox" id="de"></div></div>
+   <div class="chips"><span class="chip"><i style="background:var(--up)"></i>COVID에서 ↑</span><span class="chip"><i style="background:var(--down)"></i>COVID에서 ↓</span><span class="chip"><i style="background:var(--line)"></i>ns (차이 없음)</span></div>
+   ${story(`같은 세포 종류 안에서 두 그룹의 유전자 비교 (${T('DE')})`,`${T('HLA class II')} ↓ · ${T('ISG')} ↑ · TNF / IL6 / IL1B는 거의 그대로.`,'결론 정리 → <b>Conclusion</b>',S.done.has(9))}`;
+  el.querySelector('#deBtn').onclick=()=>{S.de=true;S.done.add(9);this.build(el);this.draw();markRail()};
+  el.querySelectorAll('#gSeg button').forEach(b=>b.onclick=()=>{S.deGroup=b.dataset.g||null;this.draw()});
+ },
+ draw(){
+  document.querySelectorAll('#gSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.g||null)===S.deGroup));
+  document.getElementById('gMsg').textContent=S.deGroup?GRP[S.deGroup][1]:'';
+  const box=document.getElementById('de'),W=boxW(box),rh=24,t=10,l=78,H=t+DEG.length*rh+30,X=v=>l+(v+2)/5*(W-l-30);
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  [-2,-1,0,1,2,3].forEach(v=>s+=`<line class="ax" x1="${X(v)}" x2="${X(v)}" y1="${t}" y2="${H-24}" ${v===0?'style="stroke:var(--muted)"':''}/><text x="${X(v)}" y="${H-8}" text-anchor="middle" class="lbl">${v>0?'+':''}${v}</text>`);
+  DEG.forEach((d,i)=>{const y=t+i*rh,show=S.de,dim=S.deGroup&&S.deGroup!==d.grp?' opacity=".25"':'';
+    const v=show?d.fc:0,x0=X(Math.min(v,0)),w=Math.abs(X(v)-X(0));
+    s+=`<g${dim}><text x="${l-8}" y="${y+rh/2+4}" text-anchor="end" class="${S.deGroup===d.grp?'strong':''}">${d.g}</text>`+
+      `<rect data-tip="${d.g} · log2FC ${d.fc>0?'+':''}${d.fc}${d.ns?' · ns':' · p<0.05'}" x="${x0}" y="${y+4}" width="${Math.max(w,2)}" height="${rh-8}" rx="3" fill="${d.ns?'var(--line)':d.fc>0?'var(--up)':'var(--down)'}"/>`+
+      (show&&d.ns?`<text x="${X(Math.max(d.fc,0))+6}" y="${y+rh/2+4}" class="lbl">ns</text>`:'')+'</g>';
+    if(i===3||i===7) s+=`<line x1="0" x2="${W}" y1="${y+rh}" y2="${y+rh}" style="stroke:var(--line);stroke-dasharray:3 3"/>`});
+  box.innerHTML=s+'</svg>';
+ }});
+
+/* 10. CONCLUSION */
+STEPS.push({k:'Result',ko:'결론',title:'Conclusion',
+ build(el){
+  const pH=prop('H'),pC=prop('C');
+  const mini=(a,b,max,fmt)=>`<svg width="100%" height="64" viewBox="0 0 200 64" preserveAspectRatio="xMinYMid meet"><rect x="0" y="8" width="${Math.max(a/max*150,2)}" height="16" rx="3" fill="var(--healthy)"/><text x="${Math.max(a/max*150,2)+6}" y="21">${fmt(a)}</text><rect x="0" y="36" width="${Math.max(b/max*150,2)}" height="16" rx="3" fill="var(--covid)"/><text x="${Math.max(b/max*150,2)+6}" y="49">${fmt(b)}</text></svg>`;
+  el.innerHTML=`
+   <div class="qbox"><div class="q">COVID-19 중증 환자의 혈액은 세포 구성과 유전자 상태가 둘 다 달랐다.</div><div class="meta"><span class="chip"><i style="background:var(--healthy)"></i>Healthy</span><span class="chip"><i style="background:var(--covid)"></i>COVID-19</span></div></div>
+   <div class="finds">
+    <div class="find"><span class="n">FINDING 1 · Composition</span><h3>새로운 세포가 혈액에 등장</h3>${mini(pH[7],pC[7],.14,pct)}<p>${T('Dev. Neutrophil')} ↑ (특히 ${T('ARDS')} 환자). ${T('Plasmablast')} ↑, NK · pDC ↓.</p></div>
+    <div class="find"><span class="n">FINDING 2 · DE</span><h3>Monocyte의 HLA class II ↓</h3>${mini(3.0,1.2,3.4,v=>'HLA-DRA '+v.toFixed(1))}<p>항원제시 능력 약화. 대신 ${T('ISG')} ↑.</p></div>
+    <div class="find"><span class="n">FINDING 3 · DE</span><h3>“Cytokine storm” 신호는 약했다</h3>${mini(.3,.32,3.4,v=>'TNF '+v.toFixed(2))}<p>혈액 세포에선 TNF · IL6 · IL1B가 거의 그대로 → 염증 신호의 출처는 다른 곳일 수도.</p></div>
+   </div>
+   <div class="fig"><div class="cap"><span>오늘 지나온 pipeline</span><span>단계를 눌러 다시 보기</span></div>
+    <div class="recap">${STEPS.slice(0,10).map((s,i)=>`<span role="button" tabindex="0" data-go="${i}" style="cursor:pointer">${s.k}</span>${i<9?'<em>→</em>':''}`).join('')}</div></div>
+   <div class="ref">원 논문: Wilk AJ, Rustagi A, …, Blish CA. <i>A single-cell atlas of the peripheral immune response in patients with severe COVID-19.</i> Nature Medicine 26, 1070–1076 (2020). <a href="https://doi.org/10.1038/s41591-020-0944-y" target="_blank" rel="noopener">doi.org/10.1038/s41591-020-0944-y</a></div>
+   <div class="note">이 시뮬레이션의 숫자·세포 수·유전자 값은 학습용으로 단순화한 가상 데이터입니다. 실제 논문 수치와 다릅니다.</div>`;
+  el.querySelectorAll('[data-go]').forEach(s=>{s.onclick=()=>go(+s.dataset.go);s.onkeydown=e=>{if(e.key==='Enter')go(+s.dataset.go)}});
+  S.done.add(10);
+ },
+ draw(){}});
+
+/* ---------- shell ---------- */
+const rail=document.getElementById('rail');
+rail.innerHTML=STEPS.map((s,i)=>`<li><button data-i="${i}"><span class="dot">${i}</span><span class="nm">${s.ko}<small>${s.k}</small></span></button></li>`).join('');
+rail.querySelectorAll('button').forEach(b=>b.onclick=()=>go(+b.dataset.i));
+function markRail(){rail.querySelectorAll('li').forEach((li,i)=>{li.classList.toggle('cur',i===S.step);li.classList.toggle('done',S.done.has(i)&&i!==S.step);li.querySelector('.dot').textContent=S.done.has(i)&&i!==S.step?'✓':i});
+  const nx=document.getElementById('next');nx.classList.toggle('pulse',S.done.has(S.step)&&S.step<10)}
+function renderCode(){
+  const c=document.getElementById('codeline'); if(!c) return; const f=CODE[S.step]; if(!f){c.hidden=true;return}
+  const [r,py]=f(); c.querySelector('code').textContent=S.lang==='seurat'?r:py; c.querySelector('.who').textContent=S.lang==='seurat'?'R · Seurat':'Python · Scanpy';
+}
+function go(i){
+  if(anim) cancelAnimationFrame(anim);
+  S.step=clamp(i,0,STEPS.length-1); const st=STEPS[S.step];
+  if(S.step>=7&&S.res==null) S.res=0.5;
+  if(S.step>=6&&!S.umapRun) S.umapRun=S.step>5;
+  document.getElementById('stage').innerHTML=`
+   <div class="head"><div><div class="eyebrow">Step ${S.step} / ${STEPS.length-1}</div><h1>${st.title}<span>${st.ko}</span></h1></div></div>
+   <div class="panel"><div class="code" id="codeline"><span class="who"></span><code></code><button id="cp">copy</button></div><div id="body" style="display:flex;flex-direction:column;gap:16px"></div></div>`;
+  st.build(document.getElementById('body')); st.draw(); renderCode(); markRail();
+  document.getElementById('cp').onclick=e=>{const t=document.querySelector('#codeline code').textContent;const b=e.target;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{b.textContent='copied'},()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('#codeline code'));getSelection().removeAllRanges();getSelection().addRange(r);b.textContent='selected'}).finally(()=>setTimeout(()=>b.textContent='copy',1200))};
+  document.getElementById('prev').disabled=S.step===0;
+  const nx=document.getElementById('next'); nx.textContent=S.step===STEPS.length-1?'처음으로 ↺':'다음 →';
+  if(S.step===5&&S.umapRun===false){}
+  hideTip(); pop.hidden=true;
+}
+document.getElementById('prev').onclick=()=>{go(S.step-1);scrollTo({top:0})};
+document.getElementById('next').onclick=()=>{go(S.step===STEPS.length-1?0:S.step+1);document.querySelector('main').scrollIntoView({block:'start'})};
+const langBtns=document.querySelectorAll('#langSeg button');
+const setLang=l=>{S.lang=l;langBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===l));try{localStorage.setItem('sclab-lang',l)}catch(e){}renderCode()};
+langBtns.forEach(b=>b.onclick=()=>setLang(b.dataset.l));
+const redraw=()=>{refreshColors();if(anim)return;STEPS[S.step].draw()};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120)});
+refreshColors(); setLang(S.lang); go(0);
+document.fonts&&document.fonts.ready.then(redraw);
+</script>
