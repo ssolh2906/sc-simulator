@@ -12,7 +12,7 @@ const MARKERS: [string, number, number][] = [
   ["IFI27", -0.4, 5.8], ["LILRA4", -0.9, 5.4], ["HLA-DRA", 0.95, 5.1],
 ];
 const HOUSEKEEPING: [string, number, number][] = [
-  ["ACTB", 1.6, 0.8], ["GAPDH", 1.3, 0.9], ["B2M", 1.8, 1.0], ["RPL13", 1.5, 0.7], ["MALAT1", 1.9, 1.1],
+  ["GAPDH", 0.95, 0.8], ["RPL13", 1.25, 1.15], ["ACTB", 1.55, 0.75], ["B2M", 1.8, 1.2], ["MALAT1", 2.05, 0.85],
 ];
 
 let cache: HvgGene[] | null = null;

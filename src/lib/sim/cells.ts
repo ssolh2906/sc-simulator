@@ -168,8 +168,8 @@ export function getDataset(): Dataset {
       ux,
       uy,
       t,
-      px: ux * 0.5 + r.gauss() * 1.25,
-      py: uy * 0.42 + r.gauss() * 1.25,
+      px: ux * 0.62 + r.gauss() * 1.05,
+      py: uy * 0.5 + r.gauss() * 1.05,
       bx: r.gauss(),
       by: r.gauss(),
     });
