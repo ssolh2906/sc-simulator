@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { usePipeline } from "@/features/pipeline/PipelineProvider";
 import { STEPS, stepHref } from "@/features/pipeline/registry";
 import { ThemeToggle } from "./ThemeToggle";
@@ -10,6 +11,16 @@ import { ThemeToggle } from "./ThemeToggle";
 export function StepRail() {
   const { slug } = useParams<{ slug: string }>();
   const { done } = usePipeline();
+  const list = useRef<HTMLOListElement>(null);
+
+  // On phones the rail is a horizontal strip: keep the current step in view.
+  useEffect(() => {
+    const ol = list.current;
+    const cur = ol?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!ol || !cur || ol.scrollWidth <= ol.clientWidth) return;
+    ol.scrollLeft = cur.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2;
+  }, [slug]);
+
   return (
     <aside className="rail:sticky rail:top-5">
       <Link href="/" className="block">
@@ -17,7 +28,7 @@ export function StepRail() {
         <b className="mt-0.5 block text-[19px] leading-tight">COVID-19 blood immune cells</b>
       </Link>
       <nav aria-label="Pipeline steps">
-        <ol className="relative mt-2.5 flex gap-1 overflow-x-auto pb-1 rail:mt-4 rail:flex-col rail:gap-0.5 rail:overflow-visible rail:pb-0 rail:before:absolute rail:before:top-2 rail:before:bottom-2 rail:before:left-[13px] rail:before:w-0.5 rail:before:bg-line">
+        <ol ref={list} className="relative mt-2.5 flex gap-1 overflow-x-auto pb-1 rail:mt-4 rail:flex-col rail:gap-0.5 rail:overflow-visible rail:pb-0 rail:before:absolute rail:before:top-2 rail:before:bottom-2 rail:before:left-[13px] rail:before:w-0.5 rail:before:bg-line">
           {STEPS.map((s, i) => {
             const current = s.slug === slug;
             const isDone = done.includes(s.slug) && !current;

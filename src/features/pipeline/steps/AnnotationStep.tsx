@@ -55,9 +55,9 @@ export function AnnotationStep() {
             selected={gene}
             onSelect={setGene}
           />
-          <Note>Dot size = % of cells expressing. Darker = higher average.</Note>
+          <Note>Dot size = % of cells expressing. Stronger color = higher average.</Note>
         </ChartFrame>
-        <ChartFrame title={<><Term k="feature plot" /> · {gene}</>} aside="dark = expressed">
+        <ChartFrame title={<><Term k="feature plot" /> · {gene}</>} aside="strong color = expressed">
           <ScatterCanvas ariaLabel={`UMAP colored by ${gene} expression`} aspect={1} points={points} labels={labels} {...UMAP_AXES} />
         </ChartFrame>
       </Grid2>
