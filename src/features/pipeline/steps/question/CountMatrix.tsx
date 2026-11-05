@@ -60,8 +60,8 @@ export function CountMatrix() {
   const m = useMemo(() => pickedCounts(), []);
   const totalCells = getDataset().qcCells.length;
   const steps = useMemo(() => walkthroughSteps(m, totalCells), [m, totalCells]);
-  const tour = useWalkthrough(steps.length);
-  const focus = tour.step === null ? null : steps[tour.step];
+  const tour = useWalkthrough(steps);
+  const focus = tour.current;
 
   const headClass = (hit: boolean | undefined) =>
     !focus ? "font-medium text-muted" : hit ? "font-semibold text-accent" : "font-medium text-muted opacity-20";
@@ -74,12 +74,7 @@ export function CountMatrix() {
   return (
     <ChartFrame
       title={<><Term k="count matrix" /> · 12 example cells × {GENES.length} marker genes</>}
-      aside={
-        <span className="inline-flex items-center gap-2">
-          entry = UMI count
-          <HowToReadButton tour={tour} />
-        </span>
-      }
+      aside={<>entry = UMI count <HowToReadButton tour={tour} /></>}
     >
       <div className="overflow-x-auto p-0.5">
         <table className="border-separate border-spacing-0.5 font-mono text-[11.5px] tabular-nums">

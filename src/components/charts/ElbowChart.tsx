@@ -4,10 +4,17 @@ import type { KeyboardEvent } from "react";
 import { useSize } from "@/hooks/useSize";
 import { TooltipBox, useTooltip } from "./Tooltip";
 
-type Props = { variance: number[]; selected: number; onSelect: (n: number) => void; height?: number };
+type Props = {
+  variance: number[];
+  selected: number;
+  onSelect: (n: number) => void;
+  height?: number;
+  /** Walkthrough highlight: which bars stay at full strength. */
+  focus?: (i: number) => boolean;
+};
 
 /** Elbow plot. Click a bar (or use arrow keys) to keep PCs 1..n. */
-export function ElbowChart({ variance, selected, onSelect, height = 220 }: Props) {
+export function ElbowChart({ variance, selected, onSelect, height = 220, focus }: Props) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const [tipRef, tip] = useTooltip();
   const l = 34;
@@ -56,6 +63,7 @@ export function ElbowChart({ variance, selected, onSelect, height = 220 }: Props
                 height={height - b - Y(v)}
                 rx={Math.min(3, bw / 4)}
                 fill={i < selected ? "var(--accent)" : "var(--line)"}
+                opacity={focus && !focus(i) ? 0.15 : 1}
               />
             </g>
           ))}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { LineChart } from "@/components/charts/LineChart";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
+import { spotlight } from "@/components/charts/spotlight";
 import { toTicks } from "@/components/charts/axes";
 import { Button } from "@/components/ui/Button";
 import { Legend } from "@/components/ui/Legend";
@@ -11,6 +12,7 @@ import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Slider } from "@/components/ui/Slider";
 import { Term } from "@/components/ui/Term";
+import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { TYPE_INDEX } from "@/content/cellTypes";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { mix } from "@/lib/color";
@@ -48,6 +50,24 @@ export function TrajectoryStep() {
     [cells, velocityRun, t, c],
   );
 
+  const steps: { text: string; dots: boolean; arrows: boolean; lines?: boolean }[] = [
+    { text: `Each dot is one cell: only plasmablasts and dev. neutrophils, ${cells.length} cells, not the whole blood sample.`, dots: true, arrows: false },
+    {
+      text: "Arrows estimate where cells are heading, from the ratio of unspliced to spliced RNA. No cell was actually followed over time.",
+      dots: false,
+      arrows: true,
+    },
+    { text: "Color is latent time: an estimated order from early to late, not hours or days.", dots: true, arrows: false },
+    {
+      text: "Right chart: each line is a gene group. Plasmablast genes fade as granule genes switch on in order. The dashed line is your slider.",
+      dots: false,
+      arrows: false,
+      lines: true,
+    },
+  ];
+  const tour = useWalkthrough(steps);
+  const focus = velocityRun ? tour.current : null;
+
   const run = () => {
     dispatch({ type: "runVelocity" });
     setRuns((n) => n + 1);
@@ -68,12 +88,12 @@ export function TrajectoryStep() {
         )}
       </Controls>
       <Grid2>
-        <ChartFrame title="Subset UMAP: plasmablasts → dev. neutrophils" aside={velocityRun ? "color = latent time" : "color = cell type"}>
+        <ChartFrame title="Subset UMAP: plasmablasts → dev. neutrophils" aside={velocityRun ? <>color = latent time <HowToReadButton tour={tour} /></> : "color = cell type"}>
           <ScatterCanvas
             ariaLabel="Plasmablast and developing neutrophil cells with velocity arrows"
             aspect={4 / 5}
-            points={points}
-            arrows={velocityRun ? arrows : undefined}
+            points={focus ? spotlight(points, () => focus.dots) : points}
+            arrows={velocityRun && (!focus || focus.arrows) ? arrows : undefined}
             arrowLen={0.5}
             animateKey={runs > 0 ? runs : undefined}
             xDomain={[4.2, 10.3]}
@@ -109,6 +129,7 @@ export function TrajectoryStep() {
                 xLabel="latent time"
                 yLabel="relative expression"
                 marker={t}
+                faded={Boolean(focus) && !focus?.lines}
                 height={300}
               />
               <Legend items={WAVE_SERIES.map((s) => ({ label: s.name, color: s.color, shape: "line" }))} />
@@ -118,6 +139,7 @@ export function TrajectoryStep() {
           )}
         </ChartFrame>
       </Grid2>
+      {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <StepStory step="trajectory" />
       <PaperNote
         tutorial="Not part of a standard tutorial."

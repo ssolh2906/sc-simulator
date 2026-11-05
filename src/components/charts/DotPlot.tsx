@@ -6,6 +6,9 @@ import { TooltipBox, useTooltip } from "./Tooltip";
 
 export type DotCol = { id: number; label: string; flagged?: boolean };
 export type DotValue = { avg: number; pct: number };
+/** Walkthrough highlight. Leaving out genes or cols means all of them. */
+export type DotFocus = { genes?: string[]; cols?: number[] };
+const FADED = 0.12;
 
 type Props = {
   genes: string[];
@@ -14,11 +17,12 @@ type Props = {
   maxAvg: number;
   selected?: string;
   onSelect?: (gene: string) => void;
+  focus?: DotFocus;
   ariaLabel: string;
 };
 
 /** Genes × clusters. Dot size = % expressing, color = average expression. */
-export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, ariaLabel }: Props) {
+export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, focus, ariaLabel }: Props) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const [tipRef, tip] = useTooltip();
   const long = cols.some((c) => c.label.length > 3);
@@ -28,6 +32,8 @@ export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, ariaLa
   const height = t + genes.length * rh + 6;
   const cw = (width - l - 6) / Math.max(cols.length, 1);
   const cx = (k: number) => l + cw * k + cw / 2;
+  const colOpacity = (id: number) => (focus?.cols && !focus.cols.includes(id) ? FADED : 1);
+  const geneOpacity = (gene: string) => (focus?.genes && !focus.genes.includes(gene) ? FADED : 1);
   const key = (gene: string) => (e: KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -45,11 +51,11 @@ export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, ariaLa
           )}
           {cols.map((c, k) =>
             long ? (
-              <text key={c.id} transform={`translate(${cx(k) + 3},${t - 10}) rotate(-45)`} fill="var(--ink)" fontWeight={600}>
+              <text key={c.id} transform={`translate(${cx(k) + 3},${t - 10}) rotate(-45)`} fill="var(--ink)" fontWeight={600} opacity={colOpacity(c.id)}>
                 {c.label}
               </text>
             ) : (
-              <text key={c.id} x={cx(k)} y={t - 12} textAnchor="middle" fill="var(--ink)" fontWeight={600}>
+              <text key={c.id} x={cx(k)} y={t - 12} textAnchor="middle" fill="var(--ink)" fontWeight={600} opacity={colOpacity(c.id)}>
                 {c.label}
               </text>
             ),
@@ -70,7 +76,7 @@ export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, ariaLa
                 className={interactive ? "cursor-pointer outline-none [&:focus-visible>rect]:stroke-accent" : undefined}
               >
                 <rect x={0} y={y - rh / 2 + 1} width={width} height={rh - 2} rx={6} fill={sel ? "var(--accent-soft)" : "transparent"} stroke="transparent" strokeWidth={2} />
-                <text x={4} y={y + 4} fill={sel ? "var(--ink)" : undefined} fontWeight={sel ? 600 : 400}>
+                <text x={4} y={y + 4} fill={sel ? "var(--ink)" : undefined} fontWeight={sel ? 600 : 400} opacity={geneOpacity(gene)}>
                   {gene}
                 </text>
                 {cols.map((c, k) => {
@@ -83,6 +89,7 @@ export function DotPlot({ genes, cols, value, maxAvg, selected, onSelect, ariaLa
                       cx={cx(k)}
                       cy={y}
                       r={r}
+                      opacity={Math.min(colOpacity(c.id), geneOpacity(gene))}
                       fill={`color-mix(in oklab, var(--seq1) ${shade.toFixed(0)}%, var(--seq0))`}
                       {...tip.bind(`${gene} · ${c.label} · ${Math.round(v.pct * 100)}% cells · avg ${v.avg.toFixed(2)}`)}
                     />

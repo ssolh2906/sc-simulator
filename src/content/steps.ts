@@ -14,8 +14,8 @@ export const STORY: Record<StorySlug, StoryCopy> = {
   },
   qc: {
     do: "Count UMIs, %mito and %rRNA for every cell. Cut cells outside the lines.",
-    see: "Top = broken cells (high mito). High genes-per-UMI = likely multiplets. Too strict = real cells lost.",
-    locked: "Move the sliders, then press Filter cells.",
+    see: "Top = broken cells. High genes-per-UMI = likely multiplets. No cutoff is perfect: even the paper's makes a few mistakes.",
+    locked: "Finish the three steps at the top.",
   },
   normalize: {
     do: "Some cells were sequenced deeper. Remove that technical difference before comparing genes.",

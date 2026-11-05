@@ -25,7 +25,7 @@ export function QuestionStep() {
         </p>
       </div>
       <Grid2>
-        <ChartFrame title="Samples: one icon = one sample">
+        <ChartFrame title="Samples: one icon = one sample" aside="14 samples from 13 people">
           <SamplePictogram />
         </ChartFrame>
         <div className="flex flex-col justify-center gap-2.5">

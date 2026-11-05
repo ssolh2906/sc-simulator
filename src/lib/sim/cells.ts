@@ -149,6 +149,63 @@ function placeCell(r: Rng, type: number): { ux: number; uy: number; t: number } 
   return { ...blob(def.umap, def.sd), t: NaN };
 }
 
+// Real data never splits cleanly at a cutoff, so some droplets end up on the wrong side.
+// Counts are low enough that the paper's cutoffs stay a good choice, just not a perfect one.
+type BadKind = keyof typeof FAILING;
+const SLIPPED_PAST_PAPER: Record<BadKind, number> = { broken: 12, rrna: 5, multiplet: 10, empty: 5 };
+const REAL_LOST_BY_PAPER: Record<BadKind, number> = { broken: 6, rrna: 2, multiplet: 5, empty: 3 };
+
+/** Just inside the paper's line for this kind of bad droplet. */
+const SLIPPED_METRICS: Record<BadKind, (r: Rng, i: number) => Partial<Metrics>> = {
+  broken: (r) => ({ pctMt: 13 + 6.9 * r.next() }),
+  rrna: (r) => ({ pctRrna: 13 + 6.9 * r.next() }),
+  multiplet: (r, i) => (i % 2 === 0 ? { nCount: 10000 + 4900 * r.next() } : { genesPerUmi: 0.68 + 0.069 * r.next() }),
+  empty: (r) => ({ nCount: 1000 + 250 * r.next(), genesPerUmi: 0.66 + 0.08 * r.next() }),
+};
+
+/** A real cell just past the line that catches this kind of bad droplet. */
+const LOST_METRICS: Record<BadKind, (r: Rng, i: number) => Partial<Metrics>> = {
+  broken: (r) => ({ pctMt: 20 + 6 * r.next() }),
+  rrna: (r) => ({ pctRrna: 20 + 5 * r.next() }),
+  multiplet: (r, i) => (i % 2 === 0 ? { nCount: 15001 + 4000 * r.next() } : { genesPerUmi: 0.751 + 0.04 * r.next() }),
+  empty: (r) => ({ nCount: 700 + 299 * r.next() }),
+};
+
+/**
+ * Relabels droplets instead of adding them, and uses its own RNG. Every later step
+ * therefore sees the same cells, and who passes the paper's cutoffs does not change.
+ */
+function blurCutoffs(qcCells: QcCell[], cells: Cell[]) {
+  const r = createRng(SEED + 20);
+  const shuffled = <T>(items: T[]) => {
+    const out = [...items];
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(r.next() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+  };
+
+  const inCells = new Set(cells.map((c) => c.id));
+
+  // CD4 T depth feeds the normalization demo, so those cells keep their metrics.
+  const passing = shuffled(cells.filter((c) => c.type < CELL_TYPES.length && c.type !== TYPE_INDEX.cd4t));
+  let next = 0;
+  for (const kind of Object.keys(SLIPPED_PAST_PAPER) as BadKind[]) {
+    for (let i = 0; i < SLIPPED_PAST_PAPER[kind]; i++) {
+      const droplet = qcCells[passing[next++].id];
+      Object.assign(droplet, { kind }, SLIPPED_METRICS[kind](r, i));
+    }
+  }
+
+  for (const kind of Object.keys(REAL_LOST_BY_PAPER) as BadKind[]) {
+    const failing = shuffled(qcCells.filter((c) => c.kind === kind && !inCells.has(c.id)));
+    failing.slice(0, REAL_LOST_BY_PAPER[kind]).forEach((droplet, i) => {
+      Object.assign(droplet, { kind: "real" }, realMetrics(r), LOST_METRICS[kind](r, i));
+    });
+  }
+}
+
 let cache: Dataset | null = null;
 
 export function getDataset(): Dataset {
@@ -188,6 +245,7 @@ export function getDataset(): Dataset {
       }
     }
   }
+  blurCutoffs(qcCells, cells);
   cache = { qcCells, cells };
   return cache;
 }

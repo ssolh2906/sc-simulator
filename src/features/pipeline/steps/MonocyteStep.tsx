@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { BoxDotPlot } from "@/components/charts/BoxDotPlot";
 import { ChartFrame } from "@/components/charts/ChartFrame";
-import { Heatmap } from "@/components/charts/Heatmap";
+import { Heatmap, type HeatFocus } from "@/components/charts/Heatmap";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
 import { Term } from "@/components/ui/Term";
+import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { GROUPS } from "@/content/cellTypes";
 import { genesIn } from "@/content/genes";
 import { perSampleDe } from "@/lib/sim/de";
@@ -56,23 +57,44 @@ export function MonocyteStep() {
     mark: tab === "isg" && s.isgLow,
   }));
 
+  // The strongest change in this gene set, so the worked example is easy to see.
+  const strongest = [...de.values()].reduce((a, b) => (Math.abs(b.log2fc) > Math.abs(a.log2fc) ? b : a));
+  const fold = (2 ** Math.abs(strongest.log2fc)).toFixed(1);
+  const steps: (HeatFocus & { text: string })[] = [
+    { text: `Each row is one gene, here ${ROWS[tab][0]}.`, rows: [ROWS[tab][0]] },
+    {
+      text: `Each column is one COVID sample: 8 of the 14. The 6 healthy samples are the baseline, so they get no column.${tab === "isg" ? " * marks a sample with little ISG signal." : ""}`,
+      cols: [cols[0].key],
+    },
+    {
+      text: `${strongest.gene} in ${strongest.sample}: log2FC ${strongest.log2fc.toFixed(2)}, about ${fold} times ${strongest.log2fc < 0 ? "lower" : "higher"} than healthy. Stronger color means a bigger change.`,
+      rows: [strongest.gene],
+      cols: [strongest.sample],
+    },
+    { text: "A small dot means the change is significant after Bonferroni correction (padj < 0.05). No dot: it could be chance.", sigOnly: true },
+  ];
+  const tour = useWalkthrough(steps);
+  const focus = tour.current;
+
   return (
     <>
       <Controls>
         <Segmented label="Gene set" options={TABS} value={tab} onChange={pick} />
       </Controls>
       <Grid2>
-        <ChartFrame title={<>CD14 Mono · <Term k="log2FC" /> vs healthy · genes × COVID samples</>} aside="dot = Bonferroni padj < 0.05">
+        <ChartFrame title={<>CD14 Mono · <Term k="log2FC" /> vs healthy · genes × COVID samples</>} aside={<>dot = Bonferroni padj &lt; 0.05 <HowToReadButton tour={tour} /></>}>
           <Heatmap
             ariaLabel={`Heatmap of ${TABS.find((t) => t.value === tab)!.label} log2 fold changes per COVID sample`}
             rows={ROWS[tab]}
             cols={cols}
             value={(g, s) => de.get(`${g}|${s}`)!.log2fc}
             sig={(g, s) => de.get(`${g}|${s}`)!.sig}
+            focus={focus ?? undefined}
           />
         </ChartFrame>
         {tab === "cyt" ? <CytokinePanel /> : <ModulePanel tab={tab} />}
       </Grid2>
+      {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <p className="text-sm text-ink-2">{SEE[tab]}</p>
       <StepStory step="monocytes" />
       <PaperNote

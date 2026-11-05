@@ -5,6 +5,10 @@ import { TooltipBox, useTooltip } from "./Tooltip";
 
 export type HeatCol = { key: string; label: string; group: string; mark?: boolean };
 
+/** Walkthrough highlight. Leaving out rows or cols means all of them. */
+export type HeatFocus = { rows?: string[]; cols?: string[]; sigOnly?: boolean };
+const FADED = 0.12;
+
 type Props = {
   rows: string[];
   cols: HeatCol[];
@@ -12,6 +16,7 @@ type Props = {
   sig?: (row: string, col: string) => boolean;
   /** Color saturates at ±limit. */
   limit?: number;
+  focus?: HeatFocus;
   ariaLabel: string;
 };
 
@@ -21,7 +26,7 @@ const fill = (v: number, limit: number) => {
 };
 
 /** Diverging heatmap (log2FC). A dot marks significant cells. */
-export function Heatmap({ rows, cols, value, sig, limit = 2.5, ariaLabel }: Props) {
+export function Heatmap({ rows, cols, value, sig, limit = 2.5, focus, ariaLabel }: Props) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const [tipRef, tip] = useTooltip();
   const l = 72;
@@ -30,6 +35,8 @@ export function Heatmap({ rows, cols, value, sig, limit = 2.5, ariaLabel }: Prop
   const height = t + rows.length * ch + 30;
   const cw = Math.min(56, (width - l - 4) / Math.max(cols.length, 1));
   const groups = [...new Set(cols.map((c) => c.group))];
+  const rowOpacity = (r: string) => (focus?.rows && !focus.rows.includes(r) ? FADED : 1);
+  const colOpacity = (key: string) => (focus?.cols && !focus.cols.includes(key) ? FADED : 1);
   return (
     <div ref={ref} style={{ minHeight: height }}>
       {width > 0 && (
@@ -48,20 +55,20 @@ export function Heatmap({ rows, cols, value, sig, limit = 2.5, ariaLabel }: Prop
             );
           })}
           {cols.map((c, i) => (
-            <text key={c.key} x={l + i * cw + cw / 2} y={t - 8} textAnchor="middle" fill={c.mark ? "var(--warn)" : "var(--ink-2)"} fontWeight={c.mark ? 600 : 400}>
+            <text key={c.key} x={l + i * cw + cw / 2} y={t - 8} textAnchor="middle" fill={c.mark ? "var(--warn)" : "var(--ink-2)"} fontWeight={c.mark ? 600 : 400} opacity={colOpacity(c.key)}>
               {c.label}
               {c.mark ? "*" : ""}
             </text>
           ))}
           {rows.map((r, ri) => (
             <g key={r}>
-              <text x={l - 6} y={t + ri * ch + 14} textAnchor="end">
+              <text x={l - 6} y={t + ri * ch + 14} textAnchor="end" opacity={rowOpacity(r)}>
                 {r}
               </text>
               {cols.map((c, ci) => {
                 const v = value(r, c.key);
                 return (
-                  <g key={c.key} {...tip.bind(`${r} · ${c.label} · log2FC ${v > 0 ? "+" : ""}${v.toFixed(2)}${sig?.(r, c.key) ? " · significant" : ""}`)}>
+                  <g key={c.key} opacity={focus?.sigOnly && !sig?.(r, c.key) ? FADED : Math.min(rowOpacity(r), colOpacity(c.key))} {...tip.bind(`${r} · ${c.label} · log2FC ${v > 0 ? "+" : ""}${v.toFixed(2)}${sig?.(r, c.key) ? " · significant" : ""}`)}>
                     <rect x={l + ci * cw + 1} y={t + ri * ch + 1} width={cw - 2} height={ch - 2} rx={3} fill={fill(v, limit)} />
                     {sig?.(r, c.key) && <circle cx={l + ci * cw + cw / 2} cy={t + ri * ch + ch / 2} r={2.2} fill="var(--ink)" />}
                   </g>

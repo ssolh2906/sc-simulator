@@ -5,11 +5,13 @@ import { Bars } from "@/components/charts/Bars";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { niceTicks, toTicks } from "@/components/charts/axes";
+import { spotlight } from "@/components/charts/spotlight";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
+import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { int, kilo } from "@/lib/format";
 import { depthLeakPoints, depthTrend, TOY_CELLS, toyValues, type NormMethod } from "@/lib/sim/normalize";
@@ -62,6 +64,24 @@ export function NormalizeStep() {
     };
   }, [norm, c]);
 
+  const midX = (xRange[0] + xRange[1]) / 2;
+  const midY = (yDomain[0] + yDomain[1]) / 2;
+  const steps: { text: string; hit: (p: { x: number; y: number }, i: number) => boolean; r?: number }[] = [
+    {
+      text: "Each dot is one CD4 T cell. Using one cell type keeps the biology alike, so a trend here is technical.",
+      hit: (_, i) => i === 0,
+      r: 6,
+    },
+    { text: "Further right means that cell was sequenced deeper: more UMIs in total.", hit: (p) => p.x > midX },
+    { text: "Higher means a larger average value across 40 low-count genes, out of ~20k.", hit: (p) => p.y > midY },
+    {
+      text: "The red line is the trend. Sloped: deeper cells look higher for technical reasons. Flat: that effect is gone. Try all three methods.",
+      hit: () => false,
+    },
+  ];
+  const tour = useWalkthrough(steps);
+  const focus = tour.current;
+
   const toy = toyValues(norm);
   const toyMax = norm === "log" ? 5 : 25;
 
@@ -86,11 +106,11 @@ export function NormalizeStep() {
             height={210}
           />
         </ChartFrame>
-        <ChartFrame title={<>Depth leak: CD4 T cells, 40 low-count genes</>}>
+        <ChartFrame title={<>Depth leak: CD4 T cells, 40 low-count genes</>} aside={<HowToReadButton tour={tour} />}>
           <ScatterCanvas
             ariaLabel="Average gene value against sequencing depth"
             aspect={4 / 3}
-            points={points}
+            points={focus ? spotlight(points, (i) => focus.hit(points[i], i), { r: focus.r }) : points}
             xDomain={[xRange[0] - 0.05, xRange[1] + 0.05]}
             yDomain={yDomain}
             xTicks={toTicks([1000, 2000, 5000, 10000].map(Math.log10), (v) => kilo(10 ** v))}
@@ -110,6 +130,7 @@ export function NormalizeStep() {
           />
         </ChartFrame>
       </Grid2>
+      {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <p className="text-sm text-ink-2">
         {CAPTION[norm]} Red line = trend. <Term k="SCTransform" /> keeps <Term k="Pearson residual">Pearson residuals</Term>{" "}
         and can also <Term k="regress out" /> quality variables.

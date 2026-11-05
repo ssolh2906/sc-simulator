@@ -15,11 +15,13 @@ type Props = {
   yLabel?: string;
   /** Vertical marker (e.g. the latent-time slider). */
   marker?: number;
+  /** Fade the lines, unless this walkthrough step is about them. */
+  faded?: boolean;
   height?: number;
   ariaLabel: string;
 };
 
-export function LineChart({ series, xDomain, yDomain, xTicks, yTicks, xLabel, yLabel, marker, height = 220, ariaLabel }: Props) {
+export function LineChart({ series, xDomain, yDomain, xTicks, yTicks, xLabel, yLabel, marker, faded, height = 220, ariaLabel }: Props) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const l = 46;
   const b = 36;
@@ -61,6 +63,7 @@ export function LineChart({ series, xDomain, yDomain, xTicks, yTicks, xLabel, yL
               fill="none"
               stroke={s.color}
               strokeWidth={2.2}
+              opacity={faded ? 0.15 : 1}
               strokeDasharray={s.dashed ? "5 4" : undefined}
             />
           ))}

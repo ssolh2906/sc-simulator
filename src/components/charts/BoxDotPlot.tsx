@@ -7,6 +7,10 @@ import { TooltipBox, useTooltip } from "./Tooltip";
 
 export type BoxGroup = { name: string; color: string; values: { label: string; value: number }[] };
 
+/** Walkthrough highlight: one part of the plot, optionally for one group or sample. */
+export type BoxFocus = { part: "dots" | "box" | "note"; group?: string; sample?: string };
+const FADED = 0.12;
+
 type Props = {
   groups: BoxGroup[];
   yFormat?: (v: number) => string;
@@ -17,11 +21,12 @@ type Props = {
   /** Ring these points (e.g. ISG-low samples). */
   ring?: (label: string) => boolean;
   height?: number;
+  focus?: BoxFocus;
   ariaLabel: string;
 };
 
 /** One dot per sample, with a box for the quartiles. Replicates = samples. */
-export function BoxDotPlot({ groups, yFormat = String, yLabel, yDomain, notes, ring, height = 230, ariaLabel }: Props) {
+export function BoxDotPlot({ groups, yFormat = String, yLabel, yDomain, notes, ring, height = 230, focus, ariaLabel }: Props) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const [tipRef, tip] = useTooltip();
   const all = groups.flatMap((g) => g.values.map((v) => v.value));
@@ -54,14 +59,16 @@ export function BoxDotPlot({ groups, yFormat = String, yLabel, yDomain, notes, r
             const cx = l + slot * gi + slot / 2;
             const vals = g.values.map((v) => v.value);
             const [q1, q2, q3] = [0.25, 0.5, 0.75].map((q) => quantile(vals, q));
+            const inGroup = !focus?.group || focus.group === g.name;
+            const partOpacity = (part: BoxFocus["part"]) => (!focus || (focus.part === part && inGroup) ? 1 : FADED);
             return (
               <g key={g.name}>
                 {vals.length > 0 && (
-                  <>
+                  <g opacity={partOpacity("box")}>
                     <line x1={cx} x2={cx} y1={Y(Math.min(...vals))} y2={Y(Math.max(...vals))} stroke={g.color} strokeWidth={1.5} />
                     <rect x={cx - bw / 2} y={Y(q3)} width={bw} height={Math.max(Y(q1) - Y(q3), 1)} rx={4} fill={`color-mix(in oklab, ${g.color} 16%, var(--surface))`} stroke={g.color} strokeWidth={1.5} />
                     <line x1={cx - bw / 2} x2={cx + bw / 2} y1={Y(q2)} y2={Y(q2)} stroke={g.color} strokeWidth={2.5} />
-                  </>
+                  </g>
                 )}
                 {g.values.map((v, i) => {
                   const jitter = (((i * 0.618) % 1) - 0.5) * bw * 0.9;
@@ -71,6 +78,7 @@ export function BoxDotPlot({ groups, yFormat = String, yLabel, yDomain, notes, r
                       cx={cx + jitter}
                       cy={Y(v.value)}
                       r={5}
+                      opacity={focus?.sample && focus.sample !== v.label ? FADED : partOpacity("dots")}
                       fill={g.color}
                       stroke={ring?.(v.label) ? "var(--ink)" : "var(--surface)"}
                       strokeWidth={ring?.(v.label) ? 2 : 1.5}
@@ -78,12 +86,12 @@ export function BoxDotPlot({ groups, yFormat = String, yLabel, yDomain, notes, r
                     />
                   );
                 })}
-                <text x={cx} y={height - b + 16} textAnchor="middle" fill="var(--ink)" fontWeight={600}>
+                <text x={cx} y={height - b + 16} textAnchor="middle" fill="var(--ink)" fontWeight={600} opacity={inGroup ? 1 : FADED}>
                   {g.name}
                   <tspan fill="var(--muted)" fontWeight={400}>{` n=${g.values.length}`}</tspan>
                 </text>
                 {notes?.[gi] && (
-                  <text x={cx} y={12} textAnchor="middle" fill="var(--ink)">
+                  <text x={cx} y={12} textAnchor="middle" fill="var(--ink)" opacity={partOpacity("note")}>
                     {notes[gi]}
                   </text>
                 )}

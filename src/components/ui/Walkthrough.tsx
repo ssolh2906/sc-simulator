@@ -4,8 +4,20 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 const SMALL_BTN = "cursor-pointer rounded-md border px-2 py-0.5 font-mono text-[11px]";
 
-/** Step-through state for a "How to read" walkthrough. `step` is null while closed. */
-export function useWalkthrough(count: number) {
+/** The controls need only this much, whatever a chart's steps look like. */
+export type Walkthrough = {
+  step: number | null;
+  count: number;
+  triggerId: string;
+  close: () => void;
+  toggle: () => void;
+  back: () => void;
+  next: () => void;
+};
+
+/** Step-through state for a "How to read" walkthrough. `current` is null while closed. */
+export function useWalkthrough<T>(steps: T[]): Walkthrough & { current: T | null } {
+  const count = steps.length;
   const [step, setStep] = useState<number | null>(null);
   const triggerId = useId();
 
@@ -17,6 +29,7 @@ export function useWalkthrough(count: number) {
 
   return {
     step,
+    current: step === null ? null : steps[step],
     count,
     triggerId,
     close,
@@ -25,8 +38,6 @@ export function useWalkthrough(count: number) {
     next: () => (step === count - 1 ? close() : setStep((s) => (s ?? 0) + 1)),
   };
 }
-
-export type Walkthrough = ReturnType<typeof useWalkthrough>;
 
 export function HowToReadButton({ tour }: { tour: Walkthrough }) {
   const open = tour.step !== null;

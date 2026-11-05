@@ -2,15 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
-import { DotPlot } from "@/components/charts/DotPlot";
+import { DotPlot, type DotFocus } from "@/components/charts/DotPlot";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { Button } from "@/components/ui/Button";
 import { ToggleChip } from "@/components/ui/Chip";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { useThemeColors } from "@/hooks/useThemeColors";
-import { clusterDotPlot } from "@/lib/sim/annotation";
+import { pct } from "@/lib/format";
+import { clusterDotPlot, isMtOrRibo } from "@/lib/sim/annotation";
 import { getDataset } from "@/lib/sim/cells";
 import { getClusters, junkClusterIds } from "@/lib/sim/clusters";
 import { umapPos } from "@/lib/sim/umap";
@@ -48,6 +50,27 @@ export function JunkClustersStep() {
     });
   }, [flagged, junkRemoved, nPcs, c]);
 
+  // Teaches reading the plot without naming the junk clusters, which are the quiz answer.
+  const pctOf = (id: number) => dots.get(`CD3E|${id}`)!.pct;
+  const real = ids.filter((id) => !junk.includes(id));
+  const hi = real.reduce((a, b) => (pctOf(b) > pctOf(a) ? b : a));
+  const lo = real.reduce((a, b) => (pctOf(b) < pctOf(a) ? b : a));
+  const steps: (DotFocus & { text: string })[] = [
+    { text: "Each row is one gene, here CD3E. Each column is one cluster.", genes: ["CD3E"] },
+    {
+      text: `Dot size is the share of cells expressing the gene. Color is how much, on average. Big and dark: ${pct(pctOf(hi), 0)} of cluster ${hi} express CD3E.`,
+      genes: ["CD3E"],
+      cols: [hi],
+    },
+    { text: `Tiny and pale: ${pct(pctOf(lo), 0)} of cluster ${lo} express CD3E.`, genes: ["CD3E"], cols: [lo] },
+    {
+      text: "MT- and RP- rows are mitochondrial and ribosomal genes. A cluster that lights up here, with little else, is a suspect.",
+      genes: GENES.filter(isMtOrRibo),
+    },
+  ];
+  const tour = useWalkthrough(steps);
+  const focus = tour.current;
+
   const toggle = (id: number) => {
     setChecked(false);
     dispatch({ type: "toggleFlag", cluster: id });
@@ -64,19 +87,21 @@ export function JunkClustersStep() {
         ))}
       </div>
       <Grid2>
-        <ChartFrame title="Dot plot · MT- / RP- genes vs lineage genes" aside="highlight = flagged">
+        <ChartFrame title="Dot plot · MT- / RP- genes vs lineage genes" aside={<>highlight = flagged <HowToReadButton tour={tour} /></>}>
           <DotPlot
             ariaLabel="Mito and ribo gene expression per cluster"
             genes={GENES}
             cols={ids.map((id) => ({ id, label: String(id), flagged: flagged.includes(id) }))}
             value={(g, id) => dots.get(`${g}|${id}`)!}
             maxAvg={3.4}
+            focus={focus ?? undefined}
           />
         </ChartFrame>
         <ChartFrame title="UMAP · flagged clusters in orange">
           <ScatterCanvas ariaLabel="UMAP with flagged clusters highlighted" aspect={1} points={points} {...UMAP_AXES} />
         </ChartFrame>
       </Grid2>
+      {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <TopMarkers ids={ids} flagged={flagged} />
       <Controls>
         <Button onClick={() => setChecked(true)} disabled={!flagged.length || junkRemoved}>

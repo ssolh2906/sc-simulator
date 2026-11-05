@@ -117,7 +117,7 @@ Slugs are kebab-case. **Bold** = new or changed vs the prototype.
 | # | slug | Title | Main interaction | Figure(s) | Tutorial default ↔ Paper used |
 |---|---|---|---|---|---|
 | 0 | `question` | Question & Data | "Load count matrix"; "How to read" walkthrough | sample pictogram (**3 groups**), mini count matrix heatmap (hand-picked cells and genes, with … and ⋮ for what is omitted), stat tiles | — ↔ Seq-Well, 14 samples / 13 people |
-| 1 | `qc` | Quality Control | sliders: **nCount min/max, %mt, %rRNA**; toggle **complexity filter** | scatter **nCount vs %mt**; second scatter **nCount vs genes/UMI** with 0.75 line; result line (cell count + chips, see §3.1) | nFeature/%mt cut ↔ **UMI 1k–15k, mt/rRNA <20%, genes/UMI ≤0.75** |
+| 1 | `qc` | Quality Control | sliders: **nCount min/max, %mt, %rRNA**; toggle **complexity filter**; each name opens a glossary popover | scatter **nCount vs %mt**; second scatter **nCount vs genes/UMI** with 0.75 line; live cell count; "your cutoffs vs paper" table (see §3.1) | nFeature/%mt cut ↔ **UMI 1k–15k, mt/rRNA <20%, genes/UMI ≤0.75** |
 | 2 | `normalize` | **SCTransform** | segmented: Raw / LogNormalize / **SCTransform** | 3-cell bar demo **+ "depth leak" scatter**: gene value vs library size, correlated → flat | LogNormalize ↔ **SCTransform + regression** |
 | 3 | `variable-genes` | Variable genes | slider top-N | mean vs residual variance scatter, labeled markers & housekeeping | 2,000 HVG ↔ **SCT variable genes (3,000 default)** |
 | 4 | `pca` | PCA | click elbow bars | elbow (PC1–50, compressed), PC1 vs PC2 | ~10 by elbow ↔ **50 PCs** (note: with SCT, more PCs is usually safe) |
@@ -132,7 +132,7 @@ Slugs are kebab-case. **Bold** = new or changed vs the prototype.
 
 ### 3.1 Key teaching moments (must land)
 
-- **QC:** each cut removes a different kind of bad cell. Too strict loses real cells. Always show the cell count. After filtering, add a chip only for each kind of bad cell kept or for too many real cells lost. If nothing is wrong, show one all-clear chip.
+- **QC:** each cut removes a different kind of bad cell. Too strict loses real cells. Always show the live cell count. "Filter cells" saves the user's cutoffs, and "Use paper cutoffs" adds the paper's next to them, in a table of cells kept, bad cells kept by kind, and real cells lost. Each "Filter cells" also gives one verdict (Too loose, Too strict, Loose and strict, Good balance) and one hint about the biggest problem. The hint marks the control to try and names a direction, never a value. The step counts as done once the paper's cutoffs have been seen.
 - **SCTransform:** after LogNormalize, deeper-sequenced cells still look "higher". After SCT, that trend disappears. Show this with a depth-vs-expression scatter whose slope goes to ~0.
 - **Junk clusters:** clustering can still find "clusters" made of low-quality cells, so you check the clusters too.
 - **Replicates = samples, not cells.** In the composition step, show one point per sample. Include a toggle "pool all cells (wrong)" vs "per sample (right)". The pooled view looks overconfident.
@@ -146,7 +146,7 @@ Write DO / SEE in ≤ 20 words each. The next-step button in the pager says wher
 
 ```
 qc.do    = "Count UMIs, %mito and %rRNA for every cell. Cut cells outside the lines."
-qc.see   = "Top = broken cells (high mito). High genes-per-UMI = likely multiplets. Too strict = real cells lost."
+qc.see   = "Top = broken cells. High genes-per-UMI = likely multiplets. No cutoff is perfect: even the paper's makes a few mistakes."
 
 normalize.see = "LogNormalize still leaks depth into values. SCTransform flattens it."
 composition.see = "Dev. Neutrophils and plasmablasts rise, mostly in ARDS. NK, CD16 Mono, pDC drop."
@@ -181,7 +181,7 @@ Show the paper-faithful version. Where Scanpy has no exact match, label it `clos
   - NonVent: Plasmablast ↑, γδ T ↓, pDC ↓ (smaller effects)
   - Healthy: baseline, Dev. Neut ≈ 0
 - **UMAP layout:** fixed centroid per type, with **Dev. Neutrophil placed next to Plasmablast** (paper). Add a "bridge" of cells between them for the trajectory step.
-- **Low-quality cells (QC step only):** low-UMI/high-mito "broken" cells, high-rRNA cells, and high-complexity "multiplets" (genes/UMI > 0.75).
+- **Low-quality cells (QC step only):** low-UMI/high-mito "broken" cells, high-rRNA cells, and high-complexity "multiplets" (genes/UMI > 0.75). Bad and real droplets overlap near each cutoff, so the paper's cutoffs keep a few bad cells and lose a few real ones. These are relabeled droplets, so exactly the same cells pass the paper's cutoffs and reach later steps.
 - **Junk clusters:** after QC, add 2 small clusters with high MT-/RP- marker scores. The user must flag them.
 - **Expression model:** `[meanLog, pctExpressing]` per gene × type, with condition modifiers:
   - CD14 Mono HLA class II genes (HLA-DRA, HLA-DPB1, HLA-DMA, HLA-DRB1…): lower in all COVID samples, slightly lower still in ARDS.
@@ -292,7 +292,8 @@ Carry over the prototype look: a cool lab-bench neutral background, deep teal ac
 - **Cell types (11 > 8 hues):** color by lineage family with shades (T family = blue shades; myeloid = orange/pink; B lineage = green/aqua; DC = violet; Dev. Neut = red). Always add **direct labels** on UMAP centroids.
 - Status chips (✓ / !) use good/warn colors with an icon and text.
 - **Keep the focus on the figures.** Use chips only for controls and for result feedback. Do not add chips or badges for context such as method, tissue or data source: put it in a chart title or plain text, and drop it if the footer, code line or "Paper used" note already says it. A status chip that only confirms the current selection adds nothing, so show it only for a warning or a result.
-- **"How to read":** a small button on a figure that is hard to read at first sight. It steps through highlights in place, with one line of text under the figure and nothing covering the data. Add it to a figure only when it earns its place. Today: count matrix.
+- **Next-action line:** a step with several actions in a set order shows what to do now in one line above the controls. It changes as the user acts, and the next control gets the emphasis. It is a hint, never a lock. Today: QC.
+- **"How to read":** a small button on a figure that is hard to read at first sight. It steps through highlights in place, with one line of text under the figure and nothing covering the data. Each step that has a hard-to-read figure gets one, on that figure only: what one mark means, what the axes or colors mean, and whether the figure shows all the data or a part of it. Never reveal a quiz answer. Clustering, annotation and conclusion have none: clustering's labels are plain, annotation reuses the dot plot taught on junk clusters, and conclusion is a recap.
 - **Landing page:** title, the research question, "Start the lab", and the pipeline list. No feature cards or metadata chips.
 - Responsive: rail turns into horizontal chips under 860px, figures stack under 640px. No horizontal page scroll.
 - Motion: one UMAP morph and the velocity arrows only. Respect `prefers-reduced-motion`.

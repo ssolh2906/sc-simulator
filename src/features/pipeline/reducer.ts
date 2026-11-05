@@ -1,6 +1,6 @@
 import type { Resolution } from "@/lib/sim/clusters";
 import type { NormMethod } from "@/lib/sim/normalize";
-import { LOOSE_QC, type QcParams } from "@/lib/sim/qc";
+import { LOOSE_QC, PAPER_QC, sameQc, type QcParams } from "@/lib/sim/qc";
 import type { StepSlug } from "./registry";
 
 /** User choices only. Everything shown is derived from these by lib/sim. */
@@ -8,6 +8,9 @@ export type PipelineState = {
   done: StepSlug[];
   loaded: boolean;
   qc: QcParams;
+  /** The user's own cutoffs at their last "Filter cells", kept to compare with the paper's. */
+  qcTried: QcParams | null;
+  qcPaperSeen: boolean;
   norm: NormMethod;
   nHvg: number;
   nPcs: number;
@@ -25,6 +28,8 @@ export const initialState: PipelineState = {
   done: [],
   loaded: false,
   qc: LOOSE_QC,
+  qcTried: null,
+  qcPaperSeen: false,
   norm: "raw",
   nHvg: 3000,
   nPcs: 50,
@@ -41,6 +46,8 @@ export type PipelineAction =
   | { type: "complete"; step: StepSlug }
   | { type: "load" }
   | { type: "setQc"; patch: Partial<QcParams> }
+  | { type: "filterQc" }
+  | { type: "usePaperQc" }
   | { type: "setNorm"; method: NormMethod }
   | { type: "setHvg"; n: number }
   | { type: "setPcs"; n: number }
@@ -54,6 +61,12 @@ export type PipelineAction =
   | { type: "runSingleR" }
   | { type: "runVelocity" };
 
+/** Where the QC guide stands: 1 set cutoffs, 2 filter, 3 see the paper's, 4 compare. */
+export function qcStage(s: PipelineState): 1 | 2 | 3 | 4 {
+  if (s.qcTried) return s.qcPaperSeen ? 4 : 3;
+  return sameQc(s.qc, LOOSE_QC) || sameQc(s.qc, PAPER_QC) ? 1 : 2;
+}
+
 const complete = (s: PipelineState, step: StepSlug): PipelineState =>
   s.done.includes(step) ? s : { ...s, done: [...s.done, step] };
 
@@ -65,6 +78,11 @@ export function reducer(s: PipelineState, a: PipelineAction): PipelineState {
       return complete({ ...s, loaded: true }, "question");
     case "setQc":
       return { ...s, qc: { ...s.qc, ...a.patch } };
+    case "filterQc":
+      // Filtering with the paper's values must not overwrite "your cutoffs" in the comparison.
+      return sameQc(s.qc, PAPER_QC) ? s : { ...s, qcTried: s.qc };
+    case "usePaperQc":
+      return complete({ ...s, qc: PAPER_QC, qcPaperSeen: true }, "qc");
     case "setNorm":
       return a.method === "sct" ? complete({ ...s, norm: a.method }, "normalize") : { ...s, norm: a.method };
     case "setHvg":
