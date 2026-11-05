@@ -39,11 +39,7 @@ export function QuestionStep() {
           </StatTiles>
         </div>
       </Grid2>
-      {loaded && (
-        <ChartFrame title={<><Term k="count matrix" /> · a corner of it: genes × cells</>} aside="entry = UMI count">
-          <CountMatrix />
-        </ChartFrame>
-      )}
+      {loaded && <CountMatrix />}
       <StepStory step="question" />
       <PaperNote
         tutorial="One group of patients vs one group of controls."

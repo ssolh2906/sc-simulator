@@ -116,7 +116,7 @@ Slugs are kebab-case. **Bold** = new or changed vs the prototype.
 
 | # | slug | Title | Main interaction | Figure(s) | Tutorial default ↔ Paper used |
 |---|---|---|---|---|---|
-| 0 | `question` | Question & Data | "Load count matrix" | sample pictogram (**3 groups**), mini count matrix heatmap, stat tiles | — ↔ Seq-Well, 14 samples / 13 people |
+| 0 | `question` | Question & Data | "Load count matrix"; "How to read" walkthrough | sample pictogram (**3 groups**), mini count matrix heatmap (hand-picked cells and genes, with … and ⋮ for what is omitted), stat tiles | — ↔ Seq-Well, 14 samples / 13 people |
 | 1 | `qc` | Quality Control | sliders: **nCount min/max, %mt, %rRNA**; toggle **complexity filter** | scatter **nCount vs %mt**; second scatter **nCount vs genes/UMI** with 0.75 line; result line (cell count + chips, see §3.1) | nFeature/%mt cut ↔ **UMI 1k–15k, mt/rRNA <20%, genes/UMI ≤0.75** |
 | 2 | `normalize` | **SCTransform** | segmented: Raw / LogNormalize / **SCTransform** | 3-cell bar demo **+ "depth leak" scatter**: gene value vs library size, correlated → flat | LogNormalize ↔ **SCTransform + regression** |
 | 3 | `variable-genes` | Variable genes | slider top-N | mean vs residual variance scatter, labeled markers & housekeeping | 2,000 HVG ↔ **SCT variable genes (3,000 default)** |
@@ -235,6 +235,7 @@ src/
     ui/       Button.tsx  Segmented.tsx  Slider.tsx  Chip.tsx  StatusChip.tsx  StatTile.tsx
               StoryCards.tsx (DO/SEE)  CodeLine.tsx (lang toggle + copy)
               Term.tsx (glossary popover)  PaperNote.tsx ("Paper used")  Badge.tsx (simplified/hypothesis)
+              Walkthrough.tsx ("How to read": step through highlights)
               Legend.tsx  Quiz.tsx
     charts/   ChartFrame.tsx (caption + size via ResizeObserver)
               ScatterCanvas.tsx (points, labels, threshold lines, hover)
@@ -291,6 +292,7 @@ Carry over the prototype look: a cool lab-bench neutral background, deep teal ac
 - **Cell types (11 > 8 hues):** color by lineage family with shades (T family = blue shades; myeloid = orange/pink; B lineage = green/aqua; DC = violet; Dev. Neut = red). Always add **direct labels** on UMAP centroids.
 - Status chips (✓ / !) use good/warn colors with an icon and text.
 - **Keep the focus on the figures.** Use chips only for controls and for result feedback. Do not add chips or badges for context such as method, tissue or data source: put it in a chart title or plain text, and drop it if the footer, code line or "Paper used" note already says it. A status chip that only confirms the current selection adds nothing, so show it only for a warning or a result.
+- **"How to read":** a small button on a figure that is hard to read at first sight. It steps through highlights in place, with one line of text under the figure and nothing covering the data. Add it to a figure only when it earns its place. Today: count matrix.
 - **Landing page:** title, the research question, "Start the lab", and the pipeline list. No feature cards or metadata chips.
 - Responsive: rail turns into horizontal chips under 860px, figures stack under 640px. No horizontal page scroll.
 - Motion: one UMAP morph and the velocity arrows only. Respect `prefers-reduced-motion`.
