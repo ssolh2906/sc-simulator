@@ -5,7 +5,6 @@ import { Bars } from "@/components/charts/Bars";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { niceTicks, toTicks } from "@/components/charts/axes";
-import { Badge } from "@/components/ui/Badge";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
@@ -87,7 +86,7 @@ export function NormalizeStep() {
             height={210}
           />
         </ChartFrame>
-        <ChartFrame title={<>Depth leak: CD4 T cells, 40 low-count genes</>} aside={<Badge kind="synthetic" />}>
+        <ChartFrame title={<>Depth leak: CD4 T cells, 40 low-count genes</>}>
           <ScatterCanvas
             ariaLabel="Average gene value against sequencing depth"
             aspect={4 / 3}

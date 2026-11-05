@@ -5,16 +5,6 @@ const BASE =
 
 type ChipProps = { children: ReactNode; color?: string; className?: string };
 
-/** Static label with an optional color dot. */
-export function Chip({ children, color, className = "" }: ChipProps) {
-  return (
-    <span className={`${BASE} ${className}`}>
-      {color && <i aria-hidden className="inline-block size-2.5 rounded-full" style={{ background: color }} />}
-      {children}
-    </span>
-  );
-}
-
 type ToggleChipProps = ChipProps & { pressed: boolean; onClick: () => void; label?: string };
 
 /** Filter chip: dims when not pressed. */

@@ -44,13 +44,13 @@ export function UmapStep() {
   return (
     <>
       <Controls>
-        <Button onClick={run} hint={`dims 1:${nPcs}`}>
+        <Button onClick={run}>
           {umapRun ? "Re-run UMAP" : "Run UMAP"}
         </Button>
         <Segmented label="PCs used" showLabel options={DIMS} value={String(nPcs)} onChange={(v) => dispatch({ type: "setPcs", n: Number(v) })} />
-        {nPcs <= 6 ? <StatusChip ok={false}>{nPcs} PCs: islands smear</StatusChip> : <StatusChip ok>{nPcs} PCs used</StatusChip>}
+        {nPcs <= 6 && <StatusChip ok={false}>{nPcs} PCs: islands smear</StatusChip>}
       </Controls>
-      <ChartFrame title={<><Term k="UMAP" /> · 1 dot = 1 cell</>} aside={umapRun ? "UMAP" : "still PCA (press Run)"}>
+      <ChartFrame title={<><Term k="UMAP" /> · 1 dot = 1 cell</>} aside={umapRun ? undefined : "still PCA (press Run)"}>
         <ScatterCanvas
           ariaLabel={umapRun ? "UMAP of all cells" : "Cells before UMAP, on PC1 and PC2"}
           points={points}

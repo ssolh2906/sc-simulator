@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { BoxDotPlot } from "@/components/charts/BoxDotPlot";
 import { ChartFrame } from "@/components/charts/ChartFrame";
-import { Badge } from "@/components/ui/Badge";
 import { ToggleChip } from "@/components/ui/Chip";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
 import { Term } from "@/components/ui/Term";
-import { CELL_TYPES, GROUPS, TYPE_INDEX, type Group } from "@/content/cellTypes";
+import { CELL_TYPES, GROUPS, TYPE_INDEX } from "@/content/cellTypes";
 import { pct, pValue } from "@/lib/format";
 import { perSample, perSampleTests } from "@/lib/sim/composition";
 import { usePipelineDispatch, useStepDone } from "../PipelineProvider";
@@ -30,7 +29,6 @@ export function CompositionStep() {
   const dispatch = usePipelineDispatch();
   const [type, setType] = useState<number>(TYPE_INDEX.neut);
   const [view, setView] = useState<View>("sample");
-  const [shown, setShown] = useState<Group[]>(["healthy", "nonvent", "ards"]);
   const [seen, setSeen] = useState({ types: [TYPE_INDEX.neut as number], pooled: false });
 
   const markSeen = (next: typeof seen) => {
@@ -45,12 +43,10 @@ export function CompositionStep() {
     setView(v);
     if (v === "pooled" && !seen.pooled) markSeen({ ...seen, pooled: true });
   };
-  const toggleGroup = (g: Group) =>
-    setShown((s) => (s.includes(g) ? (s.length > 1 ? s.filter((x) => x !== g) : s) : GROUPS.map((x) => x.key).filter((k) => s.includes(k) || k === g)));
 
   const values = perSample(type);
   const tests = perSampleTests(type);
-  const groups = GROUPS.filter((g) => shown.includes(g.key));
+  const groups = [...GROUPS];
   const name = CELL_TYPES[type].name;
 
   return (
@@ -64,13 +60,6 @@ export function CompositionStep() {
       </div>
       <Controls>
         <Segmented label="Statistics" options={VIEWS} value={view} onChange={pickView} />
-        <div role="group" aria-label="Groups shown" className="flex flex-wrap gap-1.5">
-          {GROUPS.map((g) => (
-            <ToggleChip key={g.key} pressed={shown.includes(g.key)} onClick={() => toggleGroup(g.key)} color={g.color}>
-              {g.name}
-            </ToggleChip>
-          ))}
-        </div>
       </Controls>
       {view === "sample" ? (
         <ChartFrame
@@ -90,7 +79,7 @@ export function CompositionStep() {
       )}
       <SplitUmaps type={type} groups={groups} />
       <p className="text-sm text-ink-2">
-        Pooling treats each of ~2,000 cells as independent evidence. Only <b>14 samples</b> (people) are independent, so the per-sample test is the honest one. <Badge kind="simplified">~140 cells per sample</Badge>
+        Pooling treats each of ~2,000 cells as independent evidence. Only <b>14 samples</b> (people) are independent, so the per-sample test is the honest one.
       </p>
       <StepStory step="composition" />
       <PaperNote

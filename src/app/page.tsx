@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Chip } from "@/components/ui/Chip";
 import { STEPS, stepHref } from "@/features/pipeline/registry";
 
 export default function Home() {
@@ -13,28 +12,7 @@ export default function Home() {
         <p className="text-[clamp(17px,2.4vw,21px)] leading-snug font-semibold text-balance">
           How do immune cells in the blood of severe COVID-19 patients differ from healthy people?
         </p>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Chip>Wilk et al. · Nature Medicine · 2020</Chip>
-          <Chip>PBMC</Chip>
-          <Chip>Seq-Well scRNA-seq</Chip>
-          <Chip>Synthetic data</Chip>
-        </div>
       </div>
-
-      <ul className="mt-6 grid max-w-3xl gap-2.5 text-[15px] sm:grid-cols-3">
-        <li className="rounded-xl border border-line bg-surface p-3">
-          <b className="block">Click to run</b>
-          <span className="text-ink-2">Each step is one button or slider. Watch the result change.</span>
-        </li>
-        <li className="rounded-xl border border-line bg-surface p-3">
-          <b className="block">Real code</b>
-          <span className="text-ink-2">Every step shows the Seurat or Scanpy line that does it.</span>
-        </li>
-        <li className="rounded-xl border border-line bg-surface p-3">
-          <b className="block">Paper used</b>
-          <span className="text-ink-2">Compare the tutorial default with what the study actually did.</span>
-        </li>
-      </ul>
 
       <Link
         href={stepHref("question")}

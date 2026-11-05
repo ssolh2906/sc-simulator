@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { StoryCards } from "@/components/ui/StoryCards";
 import { Term } from "@/components/ui/Term";
 import { GROUPS, TYPE_INDEX } from "@/content/cellTypes";
 import { genesIn } from "@/content/genes";
-import { CITATION, PAPER_FACTS } from "@/content/paperFacts";
-import { STORY } from "@/content/steps";
+import { PAPER_FACTS } from "@/content/paperFacts";
 import { pct } from "@/lib/format";
 import { perSample } from "@/lib/sim/composition";
 import { cd14Cells } from "@/lib/sim/de";
@@ -14,7 +11,6 @@ import { dotStats } from "@/lib/sim/expression";
 import { moduleBySample } from "@/lib/sim/moduleScore";
 import { covidSamples } from "@/lib/sim/samples";
 import { median } from "@/lib/sim/stats";
-import { STEPS, stepHref } from "../registry";
 import { Finding } from "./conclusion/Finding";
 import { MiniBars } from "./conclusion/MiniBars";
 
@@ -32,7 +28,6 @@ export function ConclusionStep() {
     value: dotStats(cd14Cells(), g).pct,
     color: g === "LYZ" ? "var(--muted)" : "var(--ct-cd14)",
   }));
-  const s = STORY.conclusion;
 
   return (
     <>
@@ -72,19 +67,6 @@ export function ConclusionStep() {
           </p>
         </Finding>
       </div>
-      <div>
-        <p className="mb-1.5 font-mono text-[11.5px] text-muted">The pipeline you ran · click to revisit</p>
-        <nav aria-label="Recap" className="flex flex-wrap items-center gap-1 font-mono text-xs">
-          {STEPS.slice(0, -1).map((st, i) => (
-            <span key={st.slug} className="inline-flex items-center gap-1">
-              <Link href={stepHref(st.slug)} className="rounded-md bg-accent-soft px-2 py-0.5 text-accent hover:underline">
-                {st.rail}
-              </Link>
-              {i < STEPS.length - 2 && <span className="text-muted">→</span>}
-            </span>
-          ))}
-        </nav>
-      </div>
       <div className="grid gap-3 text-sm sm:grid-cols-2">
         <div className="rounded-xl border border-line p-3">
           <b>Limits of the study</b>
@@ -100,13 +82,6 @@ export function ConclusionStep() {
           </p>
         </div>
       </div>
-      <p className="text-[13px] text-ink-2">
-        {CITATION.authors} <i>{CITATION.title}</i> {CITATION.journal}{" "}
-        <a href={CITATION.doi} target="_blank" rel="noopener noreferrer" className="text-accent underline">
-          {CITATION.doi.replace("https://", "")}
-        </a>
-      </p>
-      <StoryCards do={s.do} see={s.see} next={s.next} unlocked lockedHint="" />
     </>
   );
 }

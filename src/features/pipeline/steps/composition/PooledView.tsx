@@ -3,7 +3,6 @@
 import { Bars } from "@/components/charts/Bars";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { Badge } from "@/components/ui/Badge";
-import { Chip, ChipRow } from "@/components/ui/Chip";
 import { CELL_TYPES, type GROUPS } from "@/content/cellTypes";
 import { int, pct, pValue } from "@/lib/format";
 import { pooled } from "@/lib/sim/composition";
@@ -36,11 +35,10 @@ export function PooledView({ type, groups }: { type: number; groups: (typeof GRO
         yFormat={(v) => pct(v, v > 0 && v < 0.1 ? 1 : 0)}
         height={230}
       />
-      <ChipRow>
-        <Chip>NonVent vs Healthy: {pValue(p.nonvent)}</Chip>
-        <Chip>ARDS vs Healthy: {pValue(p.ards)}</Chip>
-        <span className="text-[12.5px] text-warn">Error bars and p-values look far too confident.</span>
-      </ChipRow>
+      <p className="mt-2 text-[12.5px] text-ink-2">
+        NonVent vs Healthy: {pValue(p.nonvent)}. ARDS vs Healthy: {pValue(p.ards)}.{" "}
+        <span className="text-warn">Error bars and p-values look far too confident.</span>
+      </p>
     </ChartFrame>
   );
 }

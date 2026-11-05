@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
-import { Chip, ToggleChip } from "@/components/ui/Chip";
+import { ToggleChip } from "@/components/ui/Chip";
 import { genesIn } from "@/content/genes";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { pct } from "@/lib/format";
@@ -39,11 +39,9 @@ export function CytokinePanel() {
         xDomain={[-2.8, 5]}
         yDomain={[-6, 0]}
       />
-      <div className="mt-2">
-        <Chip>
-          {pct(share)} of CD14 monocytes express {gene}
-        </Chip>
-      </div>
+      <p className="mt-2 text-sm text-ink-2">
+        {pct(share)} of CD14 monocytes express {gene}
+      </p>
     </ChartFrame>
   );
 }

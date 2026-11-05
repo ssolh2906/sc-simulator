@@ -73,7 +73,7 @@ export function JunkClustersStep() {
             maxAvg={3.4}
           />
         </ChartFrame>
-        <ChartFrame title="UMAP · flagged clusters in orange" aside={junkRemoved ? "junk removed" : undefined}>
+        <ChartFrame title="UMAP · flagged clusters in orange">
           <ScatterCanvas ariaLabel="UMAP with flagged clusters highlighted" aspect={1} points={points} {...UMAP_AXES} />
         </ChartFrame>
       </Grid2>

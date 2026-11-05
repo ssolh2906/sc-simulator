@@ -5,8 +5,8 @@ import { ScatterCanvas, type GuideLine, type Pt } from "@/components/charts/Scat
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { toTicks } from "@/components/charts/axes";
 import { Button } from "@/components/ui/Button";
-import { Chip, ChipRow } from "@/components/ui/Chip";
 import { Controls, Grid2, Note } from "@/components/ui/Layout";
+import { Legend } from "@/components/ui/Legend";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Term } from "@/components/ui/Term";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -96,10 +96,7 @@ export function QcStep() {
           />
         </ChartFrame>
       </Grid2>
-      <ChipRow>
-        <Chip color="var(--accent)">keep</Chip>
-        <Chip color="var(--muted)">remove</Chip>
-      </ChipRow>
+      <Legend items={[{ label: "keep", color: "var(--accent)" }, { label: "remove", color: "var(--muted)" }]} />
       <QcResult />
       <Note>Later steps use the paper&apos;s cutoffs, so everyone continues with the same cells.</Note>
       <StepStory step="qc" />

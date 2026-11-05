@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ElbowChart } from "@/components/charts/ElbowChart";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
-import { Chip, ChipRow } from "@/components/ui/Chip";
+import { ChipRow } from "@/components/ui/Chip";
 import { Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -26,7 +26,7 @@ export function PcaStep() {
   return (
     <>
       <Grid2>
-        <ChartFrame title={<><Term k="elbow" /> plot · click a bar to keep PCs 1…n</>} aside={`dims = 1:${nPcs}`}>
+        <ChartFrame title={<><Term k="elbow" /> plot · click a bar to keep PCs 1…n</>}>
           <ElbowChart variance={PC_VARIANCE} selected={nPcs} onSelect={(n) => dispatch({ type: "setPcs", n })} />
         </ChartFrame>
         <ChartFrame title="PC1 vs PC2" aside="cell types not known yet">
@@ -34,12 +34,9 @@ export function PcaStep() {
         </ChartFrame>
       </Grid2>
       <ChipRow>
-        <Chip>{nPcs} PCs keep {kept.toFixed(0)}% of variance</Chip>
-        {nPcs <= 6 ? (
-          <StatusChip ok={false}>Too few PCs: cell types will blur together</StatusChip>
-        ) : (
-          <StatusChip ok>Enough PCs to separate cell types</StatusChip>
-        )}
+        <StatusChip ok={nPcs > 6}>
+          {nPcs} PCs keep {kept.toFixed(0)}% of variance{nPcs <= 6 && ": cell types will blur together"}
+        </StatusChip>
       </ChipRow>
       <StepStory step="pca" />
       <PaperNote

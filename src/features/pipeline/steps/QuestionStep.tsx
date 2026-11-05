@@ -1,13 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
 import { Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { StatTile, StatTiles } from "@/components/ui/StatTile";
 import { Term } from "@/components/ui/Term";
 import { ChartFrame } from "@/components/charts/ChartFrame";
-import { Badge } from "@/components/ui/Badge";
 import { getDataset } from "@/lib/sim/cells";
 import { int } from "@/lib/format";
 import { usePipeline, usePipelineDispatch } from "../PipelineProvider";
@@ -25,18 +23,9 @@ export function QuestionStep() {
         <p className="text-[clamp(17px,2.4vw,21px)] leading-snug font-semibold text-balance">
           How do blood immune cells of severe COVID-19 patients differ from healthy people?
         </p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <Chip>Wilk et al. · Nature Medicine · 2020</Chip>
-          <Chip>
-            <Term k="PBMC" />
-          </Chip>
-          <Chip>
-            <Term k="scRNA-seq" /> (<Term k="Seq-Well" />)
-          </Chip>
-        </div>
       </div>
       <Grid2>
-        <ChartFrame title="Samples: one icon = one sample" aside={<Badge kind="simplified">~140 cells each</Badge>}>
+        <ChartFrame title="Samples: one icon = one sample">
           <SamplePictogram />
         </ChartFrame>
         <div className="flex flex-col justify-center gap-2.5">
@@ -58,7 +47,7 @@ export function QuestionStep() {
       <StepStory step="question" />
       <PaperNote
         tutorial="One group of patients vs one group of controls."
-        paper="Seq-Well on PBMCs: 14 samples from 13 people, in 3 groups."
+        paper={<><Term k="Seq-Well" /> <Term k="scRNA-seq" /> on <Term k="PBMC">PBMCs</Term>: 14 samples from 13 people, in 3 groups.</>}
         facts={["method", "donors", "groups", "scale"]}
       />
     </>

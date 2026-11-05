@@ -10,7 +10,7 @@ Handoff spec for the code session. Goal: rebuild the Korean HTML prototype (`pro
 2. Do not use a chart library. Hand-roll small SVG/Canvas chart components (see §5.3).
 3. Generate all data **in the browser** from a seeded RNG. Ship no data files.
 4. Build one route per pipeline step: `/step/[slug]`, statically generated.
-5. Every step follows the same layout: **Header → Code line → Interactive figure(s) → DO / SEE / NEXT cards → "Paper used" note**.
+5. Every step follows the same layout: **Header → Code line → Interactive figure(s) → DO / SEE cards → "Paper used" note**. The conclusion step is the exception: it has no story cards or "Paper used" note.
 6. Keep text short and simple (high-school reading level). Keep technical terms in English. Favor buttons and charts over paragraphs.
 7. Every number shown is **synthetic**. Paper facts live in one file (`content/paperFacts.ts`), and each fact records the figure or section it came from.
 
@@ -34,7 +34,7 @@ Handoff spec for the code session. Goal: rebuild the Korean HTML prototype (`pro
 [Code line: R · Seurat | Python · Scanpy]  [copy]
 [Controls: buttons / sliders / segmented]
 [Figure(s)]
-[DO]  what we did        [SEE] what we saw (locked until action)   [NEXT] where we go
+[DO]  what we did        [SEE] what we saw (locked until action)
 [Paper used ▸]  how the real paper did this step (chip, expandable)
 ```
 
@@ -104,7 +104,7 @@ Handoff spec for the code session. Goal: rebuild the Korean HTML prototype (`pro
 - **Do not use** Nature or Stanford logos, and do not imply that the authors endorse the app.
 - Footer on every page: citation and DOI link, plus *"Educational simulation with synthetic data. Not affiliated with the authors or the publisher."*
 - **Sample IDs:** donor-level ventilation status (which C# is ARDS) is in Fig 1a and was not verified in text. Use generic IDs (`H1–H6`, `N1–N4`, `A1–A4`) unless Fig 1a is checked. The ISG-low donors (C2, C3, C7) are verified. Show them as "3 of 8 COVID samples", or map them only after the IDs are verified.
-- Mark simplifications in the UI with a small `simplified` badge where it matters (cluster count, cell numbers).
+- State simplifications in words, not badges: the "Paper used" note (e.g. "30 clusters (13 here)") and "Limits of this simulation" on the conclusion step. The `simplified` badge is reserved for notes on Scanpy lines in the code line (e.g. "closest equivalent").
 
 ---
 
@@ -117,22 +117,22 @@ Slugs are kebab-case. **Bold** = new or changed vs the prototype.
 | # | slug | Title | Main interaction | Figure(s) | Tutorial default ↔ Paper used |
 |---|---|---|---|---|---|
 | 0 | `question` | Question & Data | "Load count matrix" | sample pictogram (**3 groups**), mini count matrix heatmap, stat tiles | — ↔ Seq-Well, 14 samples / 13 people |
-| 1 | `qc` | Quality Control | sliders: **nCount min/max, %mt, %rRNA**; toggle **complexity filter** | scatter **nCount vs %mt**; second scatter **nCount vs genes/UMI** with 0.75 line; result chips | nFeature/%mt cut ↔ **UMI 1k–15k, mt/rRNA <20%, genes/UMI ≤0.75** |
+| 1 | `qc` | Quality Control | sliders: **nCount min/max, %mt, %rRNA**; toggle **complexity filter** | scatter **nCount vs %mt**; second scatter **nCount vs genes/UMI** with 0.75 line; result line (cell count + chips, see §3.1) | nFeature/%mt cut ↔ **UMI 1k–15k, mt/rRNA <20%, genes/UMI ≤0.75** |
 | 2 | `normalize` | **SCTransform** | segmented: Raw / LogNormalize / **SCTransform** | 3-cell bar demo **+ "depth leak" scatter**: gene value vs library size, correlated → flat | LogNormalize ↔ **SCTransform + regression** |
 | 3 | `variable-genes` | Variable genes | slider top-N | mean vs residual variance scatter, labeled markers & housekeeping | 2,000 HVG ↔ **SCT variable genes (3,000 default)** |
 | 4 | `pca` | PCA | click elbow bars | elbow (PC1–50, compressed), PC1 vs PC2 | ~10 by elbow ↔ **50 PCs** (note: with SCT, more PCs is usually safe) |
 | 5 | `umap` | UMAP | "Run UMAP" animation; dims selector | UMAP gray → islands | dims 1:10 ↔ **dims 1:50** |
-| 6 | `clustering` | Clustering | resolution segmented (low / default / high) | UMAP colored by cluster with ID labels | Leiden ↔ **SNN + Louvain, 30 clusters** (`simplified` → ~13) |
+| 6 | `clustering` | Clustering | resolution segmented (low / default / high) | UMAP colored by cluster with ID labels | Leiden ↔ **SNN + Louvain, 30 clusters** (13 here) |
 | 7 | **`junk-clusters`** | **Remove junk clusters** | user clicks clusters to flag; "Check" | dot plot of MT-/RP- gene % per cluster; UMAP | — ↔ **2 clusters removed (mito/ribo-dominated)** |
 | 8 | `annotation` | Annotation | dot plot gene click → feature plot; matching quiz; **"Run SingleR" confirm** | dot plot, feature plot, SingleR agreement bar per cluster | markers only ↔ **FindMarkers (Wilcoxon) + SingleR** |
-| 9 | `composition` | Composition | group toggle; cell-type filter chips | **per-sample dot/box plot by group (Healthy / NonVent / ARDS)**; split UMAPs | cell-level % ↔ **per-sample % + Wilcoxon** |
+| 9 | `composition` | Composition | "per sample" vs "pool all cells" toggle; cell-type filter chips | **per-sample dot/box plot by group (Healthy / NonVent / ARDS)**; split UMAPs | cell-level % ↔ **per-sample % + Wilcoxon** |
 | 10 | `monocytes` | **Monocyte deep-dive (DE)** | tabs: HLA class II / ISG / Cytokines | **heatmap: genes × COVID samples (log2FC vs healthy)**; module-score box plot; cytokine feature plots (near-zero) | pooled COVID vs Healthy ↔ **each sample vs all healthy** |
 | 11 | **`trajectory`** | **Plasmablast → Dev. Neutrophil** | "Run RNA velocity"; latent-time slider | subset UMAP with arrows; gene-wave line chart along latent time | — ↔ **RNA velocity + latent time** (hypothesis badge) |
-| 12 | `conclusion` | Conclusion | recap chips → jump to step | 3–4 finding cards with mini-viz; limitations; citation | — |
+| 12 | `conclusion` | Conclusion | none (read only) | 3–4 finding cards with mini-viz; limitations (citation is in the footer) | — |
 
 ### 3.1 Key teaching moments (must land)
 
-- **QC:** each cut removes a different kind of bad cell. Too strict loses real cells. Show counts for dead cells kept, multiplets kept, and real cells lost.
+- **QC:** each cut removes a different kind of bad cell. Too strict loses real cells. Always show the cell count. After filtering, add a chip only for each kind of bad cell kept or for too many real cells lost. If nothing is wrong, show one all-clear chip.
 - **SCTransform:** after LogNormalize, deeper-sequenced cells still look "higher". After SCT, that trend disappears. Show this with a depth-vs-expression scatter whose slope goes to ~0.
 - **Junk clusters:** clustering can still find "clusters" made of low-quality cells, so you check the clusters too.
 - **Replicates = samples, not cells.** In the composition step, show one point per sample. Include a toggle "pool all cells (wrong)" vs "per sample (right)". The pooled view looks overconfident.
@@ -142,12 +142,11 @@ Slugs are kebab-case. **Bold** = new or changed vs the prototype.
 
 ### 3.2 Copy (English, short). Starting point for `content/steps.ts`
 
-Write DO / SEE / NEXT in ≤ 20 words each. Examples:
+Write DO / SEE in ≤ 20 words each. The next-step button in the pager says where to go. Examples:
 
 ```
 qc.do    = "Count UMIs, %mito and %rRNA for every cell. Cut cells outside the lines."
 qc.see   = "Top = broken cells (high mito). High genes-per-UMI = likely multiplets. Too strict = real cells lost."
-qc.next  = "Remove sequencing-depth effects → SCTransform"
 
 normalize.see = "LogNormalize still leaks depth into values. SCTransform flattens it."
 composition.see = "Dev. Neutrophils and plasmablasts rise, mostly in ARDS. NK, CD16 Mono, pDC drop."
@@ -234,7 +233,7 @@ src/
   components/
     layout/   StepRail.tsx  StepHeader.tsx  Pager.tsx  SiteFooter.tsx  ThemeToggle.tsx
     ui/       Button.tsx  Segmented.tsx  Slider.tsx  Chip.tsx  StatusChip.tsx  StatTile.tsx
-              StoryCards.tsx (DO/SEE/NEXT)  CodeLine.tsx (lang toggle + copy)
+              StoryCards.tsx (DO/SEE)  CodeLine.tsx (lang toggle + copy)
               Term.tsx (glossary popover)  PaperNote.tsx ("Paper used")  Badge.tsx (simplified/hypothesis)
               Legend.tsx  Quiz.tsx
     charts/   ChartFrame.tsx (caption + size via ResizeObserver)
@@ -262,7 +261,7 @@ type Label = { x: number; y: number; text: string };
 <ScatterCanvas points={Pt[]} xDomain yDomain xLabel yLabel ticks?
   lines?={Line[]} labels?={Label[]} aspect="16/9" animateFrom?={Pt[]} />
 
-<StoryCards do="..." see="..." next="..." unlocked={boolean} />
+<StoryCards do="..." see="..." unlocked={boolean} lockedHint="..." />
 <CodeLine stepKey="qc" />                      // reads lang pref + pipeline state
 <PaperNote tutorial="LogNormalize" paper="SCTransform + regression" source="Methods" />
 <Term k="doublet">doublet</Term>               // glossary popover (click/tap, Esc closes)
@@ -291,6 +290,8 @@ Carry over the prototype look: a cool lab-bench neutral background, deep teal ac
 - **Groups:** Healthy = neutral gray, NonVent = amber, ARDS = raspberry. Always show a legend. Never rely on color alone.
 - **Cell types (11 > 8 hues):** color by lineage family with shades (T family = blue shades; myeloid = orange/pink; B lineage = green/aqua; DC = violet; Dev. Neut = red). Always add **direct labels** on UMAP centroids.
 - Status chips (✓ / !) use good/warn colors with an icon and text.
+- **Keep the focus on the figures.** Use chips only for controls and for result feedback. Do not add chips or badges for context such as method, tissue or data source: put it in a chart title or plain text, and drop it if the footer, code line or "Paper used" note already says it. A status chip that only confirms the current selection adds nothing, so show it only for a warning or a result.
+- **Landing page:** title, the research question, "Start the lab", and the pipeline list. No feature cards or metadata chips.
 - Responsive: rail turns into horizontal chips under 860px, figures stack under 640px. No horizontal page scroll.
 - Motion: one UMAP morph and the velocity arrows only. Respect `prefers-reduced-motion`.
 - Accessibility: visible focus rings, buttons rather than divs, `aria-pressed` on toggles, alt text or captions on figures.

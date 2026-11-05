@@ -5,7 +5,6 @@ import { ChartFrame } from "@/components/charts/ChartFrame";
 import { DotPlot } from "@/components/charts/DotPlot";
 import { HBars } from "@/components/charts/HBars";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Grid2, Note } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
@@ -87,7 +86,6 @@ function SingleRPanel() {
   return (
     <ChartFrame
       title={<><Term k="SingleR" /> agreement with your labels</>}
-      aside={<Badge kind="synthetic" />}
       caption="Low agreement is a clue, not an error: references can lack rare states (γδ T, developing neutrophils), so markers decide."
     >
       <HBars

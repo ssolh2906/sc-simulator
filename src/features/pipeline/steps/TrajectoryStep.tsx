@@ -5,7 +5,6 @@ import { ChartFrame } from "@/components/charts/ChartFrame";
 import { LineChart } from "@/components/charts/LineChart";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { toTicks } from "@/components/charts/axes";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Legend } from "@/components/ui/Legend";
 import { Controls, Grid2 } from "@/components/ui/Layout";
@@ -57,7 +56,7 @@ export function TrajectoryStep() {
   return (
     <>
       <div className="rounded-xl border border-warn/60 bg-surface-2 px-3 py-2.5 text-sm">
-        <Badge kind="hypothesis" /> This path is a <b>hypothesis</b> from <Term k="RNA velocity" />, not a proven lineage. Another explanation:{" "}
+        This path is a <b>hypothesis</b> from <Term k="RNA velocity" />, not a proven lineage. Another explanation:{" "}
         <Term k="emergency granulopoiesis" />, where the marrow releases immature neutrophils that only look related.
       </div>
       <Controls>

@@ -3,8 +3,7 @@
 import { useMemo } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
-import { Badge } from "@/components/ui/Badge";
-import { Chip, ChipRow } from "@/components/ui/Chip";
+import { ChipRow } from "@/components/ui/Chip";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
@@ -52,14 +51,13 @@ export function ClusteringStep() {
     <>
       <Controls>
         <Segmented label="resolution" showLabel options={OPTIONS} value={resolution} onChange={(res) => dispatch({ type: "setResolution", res })} />
-        {resolution && <Chip>{n} clusters</Chip>}
       </Controls>
-      <ChartFrame title={<><Term k="SNN graph" /> → <Term k="Louvain" /> · number = cluster ID</>} aside={<Badge kind="simplified">paper: 30 clusters</Badge>}>
+      <ChartFrame title={<><Term k="SNN graph" /> → <Term k="Louvain" /> · number = cluster ID</>}>
         <ScatterCanvas ariaLabel="UMAP colored by cluster" points={points} labels={labels} {...UMAP_AXES} />
       </ChartFrame>
       {resolution && (
         <ChipRow>
-          <StatusChip ok={MESSAGE[resolution].ok}>{MESSAGE[resolution].text}</StatusChip>
+          <StatusChip ok={MESSAGE[resolution].ok}>{n} clusters · {MESSAGE[resolution].text}</StatusChip>
         </ChipRow>
       )}
       <p className="text-sm text-ink-2">

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { BoxDotPlot } from "@/components/charts/BoxDotPlot";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { Heatmap } from "@/components/charts/Heatmap";
-import { Chip, ChipRow } from "@/components/ui/Chip";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { Segmented } from "@/components/ui/Segmented";
@@ -61,11 +60,9 @@ export function MonocyteStep() {
     <>
       <Controls>
         <Segmented label="Gene set" options={TABS} value={tab} onChange={pick} />
-        <Chip color="var(--ct-cd14)">CD14 Mono only</Chip>
-        <Chip>each COVID sample vs all healthy</Chip>
       </Controls>
       <Grid2>
-        <ChartFrame title={<><Term k="log2FC" /> vs healthy · genes × COVID samples</>} aside="dot = Bonferroni padj < 0.05">
+        <ChartFrame title={<>CD14 Mono · <Term k="log2FC" /> vs healthy · genes × COVID samples</>} aside="dot = Bonferroni padj < 0.05">
           <Heatmap
             ariaLabel={`Heatmap of ${TABS.find((t) => t.value === tab)!.label} log2 fold changes per COVID sample`}
             rows={ROWS[tab]}
@@ -76,9 +73,7 @@ export function MonocyteStep() {
         </ChartFrame>
         {tab === "cyt" ? <CytokinePanel /> : <ModulePanel tab={tab} />}
       </Grid2>
-      <ChipRow>
-        <span className="text-sm text-ink-2">{SEE[tab]}</span>
-      </ChipRow>
+      <p className="text-sm text-ink-2">{SEE[tab]}</p>
       <StepStory step="monocytes" />
       <PaperNote
         tutorial="Pool all COVID cells vs all healthy cells in one FindMarkers call."

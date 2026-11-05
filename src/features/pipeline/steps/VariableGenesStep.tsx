@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { toTicks } from "@/components/charts/axes";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Legend } from "@/components/ui/Legend";
 import { Controls } from "@/components/ui/Layout";
@@ -51,7 +50,7 @@ export function VariableGenesStep() {
         <Slider label="top" min={500} max={5000} step={500} value={nHvg} onChange={(n) => dispatch({ type: "setHvg", n })} format={(v) => `${int(v)} genes`} />
         <Button onClick={() => dispatch({ type: "complete", step: "variable-genes" })}>Find variable genes</Button>
       </Controls>
-      <ChartFrame title={<>Mean vs residual variance · <Term k="variable genes" /></>} aside={<Badge kind="simplified">1 dot ≈ {TOTAL_GENES / genes.length | 0} genes</Badge>}>
+      <ChartFrame title={<>Mean vs residual variance · <Term k="variable genes" /></>} aside={`1 dot ≈ ${TOTAL_GENES / genes.length | 0} genes`}>
         <ScatterCanvas
           ariaLabel="Gene mean against residual variance"
           aspect={16 / 8}
