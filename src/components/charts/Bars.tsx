@@ -39,6 +39,7 @@ export function Bars({ bars, yMax, yTicks, yFormat = String, height = 180, ariaL
           {bars.map((bar, i) => {
             const cx = l + slot * i + slot / 2;
             const y = Y(bar.value);
+            const top = bar.err !== undefined ? Y(bar.value + bar.err) : y;
             return (
               <g key={bar.label} {...tip.bind(bar.tip ?? `${bar.label.replace("\n", " ")} · ${yFormat(bar.value)}`)}>
                 <rect x={cx - slot / 2} y={t} width={slot} height={height - b - t} fill="transparent" />
@@ -50,7 +51,7 @@ export function Bars({ bars, yMax, yTicks, yFormat = String, height = 180, ariaL
                     strokeWidth={1.5}
                   />
                 )}
-                <text x={cx} y={y - 6} textAnchor="middle" fill="var(--ink)" fontWeight={600}>
+                <text x={cx} y={top - 6} textAnchor="middle" fill="var(--ink)" fontWeight={600}>
                   {bar.text ?? yFormat(bar.value)}
                 </text>
                 {bar.label.split("\n").map((line, j) => (

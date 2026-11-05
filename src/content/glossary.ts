@@ -24,6 +24,7 @@ export const GLOSSARY = {
   resolution: "Clustering knob. Higher values cut the graph into more, smaller clusters.",
   "marker gene": "A gene that is on mainly in one cell type.",
   "dot plot": "Dot size = % of cells expressing a gene. Color = average expression.",
+  "feature plot": "The UMAP map colored by one gene's expression in each cell.",
   SingleR: "Labels each cell by comparing it to a reference dataset with known cell types.",
   Wilcoxon: "Rank-based test for a difference between two groups. Makes no normal-distribution assumption.",
   replicate: "An independent unit of evidence. Here: a sample from one person, not a cell.",

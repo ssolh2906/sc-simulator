@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 /** Tokens canvas charts need as concrete colors (SVG charts use var() directly). */
 const TOKENS = [
   "--bg", "--surface", "--surface-2", "--ink", "--ink-2", "--muted", "--line", "--accent", "--accent-soft",
-  "--healthy", "--nonvent", "--ards", "--up", "--down", "--seq0", "--seq1",
+  "--healthy", "--nonvent", "--ards", "--up", "--down", "--good", "--warn", "--seq0", "--seq1",
   "--ct-cd4t", "--ct-cd8t", "--ct-gdt", "--ct-nk", "--ct-b", "--ct-pb", "--ct-cd14", "--ct-cd16",
   "--ct-pdc", "--ct-cdc", "--ct-neut", "--ct-junk",
 ] as const;

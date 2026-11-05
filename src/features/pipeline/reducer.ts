@@ -47,6 +47,7 @@ export type PipelineAction =
   | { type: "runUmap" }
   | { type: "setResolution"; res: Resolution }
   | { type: "toggleFlag"; cluster: number }
+  | { type: "setFlags"; clusters: number[] }
   | { type: "removeJunk" }
   | { type: "answer"; cluster: number; label: string }
   | { type: "setAnswers"; answers: Record<number, string> }
@@ -79,6 +80,8 @@ export function reducer(s: PipelineState, a: PipelineAction): PipelineState {
         ...s,
         flagged: s.flagged.includes(a.cluster) ? s.flagged.filter((c) => c !== a.cluster) : [...s.flagged, a.cluster],
       };
+    case "setFlags":
+      return { ...s, flagged: a.clusters };
     case "removeJunk":
       return complete({ ...s, junkRemoved: true }, "junk-clusters");
     case "answer":

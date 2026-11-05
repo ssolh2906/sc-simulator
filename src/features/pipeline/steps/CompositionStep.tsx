@@ -1,0 +1,103 @@
+"use client";
+
+import { useState } from "react";
+import { BoxDotPlot } from "@/components/charts/BoxDotPlot";
+import { ChartFrame } from "@/components/charts/ChartFrame";
+import { Badge } from "@/components/ui/Badge";
+import { ToggleChip } from "@/components/ui/Chip";
+import { Controls } from "@/components/ui/Layout";
+import { PaperNote } from "@/components/ui/PaperNote";
+import { Segmented } from "@/components/ui/Segmented";
+import { Term } from "@/components/ui/Term";
+import { CELL_TYPES, GROUPS, TYPE_INDEX, type Group } from "@/content/cellTypes";
+import { pct, pValue } from "@/lib/format";
+import { perSample, perSampleTests } from "@/lib/sim/composition";
+import { usePipelineDispatch, useStepDone } from "../PipelineProvider";
+import { PooledView } from "./composition/PooledView";
+import { SplitUmaps } from "./composition/SplitUmaps";
+import { StepStory } from "./StepStory";
+
+type View = "sample" | "pooled";
+const VIEWS: { value: View; label: string }[] = [
+  { value: "sample", label: "Per sample (right)" },
+  { value: "pooled", label: "Pool all cells (wrong)" },
+];
+
+const pNote = (p: number) => (p < 0.05 ? pValue(p) : `ns (${pValue(p)})`);
+
+export function CompositionStep() {
+  const done = useStepDone("composition");
+  const dispatch = usePipelineDispatch();
+  const [type, setType] = useState<number>(TYPE_INDEX.neut);
+  const [view, setView] = useState<View>("sample");
+  const [shown, setShown] = useState<Group[]>(["healthy", "nonvent", "ards"]);
+  const [seen, setSeen] = useState({ types: [TYPE_INDEX.neut as number], pooled: false });
+
+  const markSeen = (next: typeof seen) => {
+    setSeen(next);
+    if (!done && next.types.length >= 2 && next.pooled) dispatch({ type: "complete", step: "composition" });
+  };
+  const pickType = (t: number) => {
+    setType(t);
+    if (!seen.types.includes(t)) markSeen({ ...seen, types: [...seen.types, t] });
+  };
+  const pickView = (v: View) => {
+    setView(v);
+    if (v === "pooled" && !seen.pooled) markSeen({ ...seen, pooled: true });
+  };
+  const toggleGroup = (g: Group) =>
+    setShown((s) => (s.includes(g) ? (s.length > 1 ? s.filter((x) => x !== g) : s) : GROUPS.map((x) => x.key).filter((k) => s.includes(k) || k === g)));
+
+  const values = perSample(type);
+  const tests = perSampleTests(type);
+  const groups = GROUPS.filter((g) => shown.includes(g.key));
+  const name = CELL_TYPES[type].name;
+
+  return (
+    <>
+      <div role="group" aria-label="Cell type" className="flex flex-wrap gap-1.5">
+        {CELL_TYPES.map((t, i) => (
+          <ToggleChip key={t.key} pressed={type === i} onClick={() => pickType(i)} color={`var(${t.token})`}>
+            {t.name}
+          </ToggleChip>
+        ))}
+      </div>
+      <Controls>
+        <Segmented label="Statistics" options={VIEWS} value={view} onChange={pickView} />
+        <div role="group" aria-label="Groups shown" className="flex flex-wrap gap-1.5">
+          {GROUPS.map((g) => (
+            <ToggleChip key={g.key} pressed={shown.includes(g.key)} onClick={() => toggleGroup(g.key)} color={g.color}>
+              {g.name}
+            </ToggleChip>
+          ))}
+        </div>
+      </Controls>
+      {view === "sample" ? (
+        <ChartFrame
+          title={<>{name} · % of each sample · 1 dot = 1 sample (<Term k="replicate" />)</>}
+          aside={<><Term k="Wilcoxon" /> vs Healthy</>}
+        >
+          <BoxDotPlot
+            ariaLabel={`${name} percentage per sample by group`}
+            groups={groups.map((g) => ({ name: g.name, color: g.color, values: values[g.key].map((v) => ({ label: v.sample, value: v.value })) }))}
+            notes={groups.map((g) => (g.key === "healthy" ? null : pNote(tests[g.key])))}
+            yFormat={(v) => pct(v, v > 0 && v < 0.1 ? 1 : 0)}
+            yLabel={`% ${name}`}
+          />
+        </ChartFrame>
+      ) : (
+        <PooledView type={type} groups={groups} />
+      )}
+      <SplitUmaps type={type} groups={groups} />
+      <p className="text-sm text-ink-2">
+        Pooling treats each of ~2,000 cells as independent evidence. Only <b>14 samples</b> (people) are independent, so the per-sample test is the honest one. <Badge kind="simplified">~140 cells per sample</Badge>
+      </p>
+      <StepStory step="composition" />
+      <PaperNote
+        tutorial="Cell-level % per group: prop.table(table(celltype, condition))."
+        paper="Per-sample % compared with a two-sided Wilcoxon rank-sum test."
+        facts={["compositionStats", "depleted", "plasmablasts", "devNeut", "devNeutPosition"]}
+      />
+    </>
+  );
+}
