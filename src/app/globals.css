@@ -146,9 +146,10 @@ body {
   outline-offset: 2px;
 }
 
-svg text {
-  font-family: var(--font-mono);
+/* Inherited defaults, so fill/fontSize attributes on marks still win. */
+svg.chart {
   fill: var(--ink-2);
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
