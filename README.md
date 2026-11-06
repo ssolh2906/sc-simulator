@@ -1,11 +1,22 @@
 # Single-cell Lab
 
+[![Deploy](https://github.com/ssolh2906/sc-simulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/ssolh2906/sc-simulator/actions/workflows/deploy.yml)
+
+### ▶ [Live demo: ssolh2906.github.io/sc-simulator](https://ssolh2906.github.io/sc-simulator/)
+
+No install, no data download — it runs entirely in your browser.
+
 An interactive, step-by-step lab for learning single-cell RNA-seq (scRNA-seq) analysis.
 Each step is a button or slider with a live chart, the matching Seurat or Scanpy line,
 and a "Paper used" note comparing the tutorial default with what a real study did.
 
 The reference study is Wilk et al., *Nature Medicine* 2020 (severe COVID-19 PBMC atlas).
 **Every number in the app is synthetic**, generated in the browser from a fixed seed.
+
+## Who it's for
+
+Students and wet-lab researchers who want to understand *why* each scRNA-seq step exists
+and what its knobs do, before running Seurat or Scanpy on real data.
 
 ## Pipeline
 
@@ -44,7 +55,7 @@ npm run build      # writes the static site to out/
 npm run preview    # serves out/ at http://localhost:3000
 ```
 
-## Deploy to GitHub Pages
+## Deploy your own copy to GitHub Pages
 
 The workflow in `.github/workflows/deploy.yml` lints, tests, builds and deploys on every push to `main`.
 
