@@ -1,22 +1,26 @@
 import type { ReactNode } from "react";
 
-type Props = { do: ReactNode; see: ReactNode; unlocked: boolean; lockedHint: string };
-
 const TAG = "mb-1 inline-block rounded-[5px] px-1.5 py-px font-mono text-[11px] font-semibold tracking-wider";
+const CARD = "min-w-0 rounded-xl border border-line bg-surface-2 px-3 py-2.5";
 
-/** DO / SEE. SEE stays locked until the user acts. */
-export function StoryCards({ do: doText, see, unlocked, lockedHint }: Props) {
-  const card = "min-w-0 rounded-xl border border-line bg-surface-2 px-3 py-2.5";
+/** DO: the goal of the step. Shown up front, before the user acts. */
+export function DoCard({ children }: { children: ReactNode }) {
   return (
-    <div className="grid gap-2.5 sm:grid-cols-2">
-      <div className={card}>
-        <span className={`${TAG} bg-line text-ink-2`}>DO</span>
-        <p className="text-sm">{doText}</p>
-      </div>
-      <div className={card} aria-live="polite">
-        <span className={`${TAG} bg-accent-soft text-accent`}>SEE</span>
-        <p className={`text-sm ${unlocked ? "" : "text-muted"}`}>{unlocked ? see : `▶ ${lockedHint}`}</p>
-      </div>
+    <div className={`${CARD} flex items-baseline gap-2.5`}>
+      <span className={`${TAG} shrink-0 bg-line text-ink-2`}>DO</span>
+      <p className="text-sm">{children}</p>
+    </div>
+  );
+}
+
+type SeeProps = { see: ReactNode; unlocked: boolean; lockedHint: string };
+
+/** SEE: what the user should have noticed. Stays locked until the user acts, so it sits below the results. */
+export function SeeCard({ see, unlocked, lockedHint }: SeeProps) {
+  return (
+    <div className={`${CARD} flex items-baseline gap-2.5`} aria-live="polite">
+      <span className={`${TAG} shrink-0 bg-accent-soft text-accent`}>SEE</span>
+      <p className={`text-sm ${unlocked ? "" : "text-muted"}`}>{unlocked ? see : `▶ ${lockedHint}`}</p>
     </div>
   );
 }
