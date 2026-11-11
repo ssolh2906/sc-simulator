@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
 import { DotPlot } from "@/components/charts/DotPlot";
-import { HBars } from "@/components/charts/HBars";
 import { ScatterCanvas, type Pt } from "@/components/charts/ScatterCanvas";
 import { Button } from "@/components/ui/Button";
 import { Controls, Grid2, Note } from "@/components/ui/Layout";
@@ -13,12 +12,12 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Term } from "@/components/ui/Term";
 import { CELL_TYPES } from "@/content/cellTypes";
 import { useThemeColors } from "@/hooks/useThemeColors";
-import { pct } from "@/lib/format";
-import { ANNOTATION_MARKERS, clusterDotPlot, matchOrder, singleRAgreement } from "@/lib/sim/annotation";
+import { ANNOTATION_MARKERS, clusterDotPlot, matchOrder, type RefMatch } from "@/lib/sim/annotation";
 import { cellsOfCluster, cleanCells, getClusters } from "@/lib/sim/clusters";
 import { centroid, umapPos } from "@/lib/sim/umap";
 import { usePipeline, usePipelineDispatch } from "../PipelineProvider";
 import { MatchCaption, MatchList, ReferenceTable } from "./annotation/ReferenceMatch";
+import { SingleRPanel, UnknownCheck } from "./annotation/SingleRPanel";
 import { useMatchReveal } from "./annotation/useMatchReveal";
 import { featurePoints } from "./featurePlot";
 import { StepStory } from "./StepStory";
@@ -33,7 +32,7 @@ const COLOR_BY: { value: ColorBy; label: string }[] = [
 const typeByKey = new Map(CELL_TYPES.map((t) => [t.key, t]));
 
 export function AnnotationStep() {
-  const { markersFound, singleR, nPcs } = usePipeline();
+  const { markersFound, singleR, unknownNamed, nPcs } = usePipeline();
   const dispatch = usePipelineDispatch();
   const c = useThemeColors();
   const [gene, setGene] = useState("CD3E");
@@ -49,6 +48,9 @@ export function AnnotationStep() {
   const now = cur >= 0 ? order[cur] : null;
   const matchOf = new Map(revealed.map((m) => [m.cluster, m]));
   const showMatch = markersFound && (reveal.running || colorBy === "match");
+  const unknown = order.find((m) => !m.key) ?? null;
+  // The only cluster the table can't name is the Dev. Neutrophil one (tests pin this), so naming it means "neut".
+  const keyOf = (m: RefMatch) => m.key ?? (unknownNamed ? "neut" : null);
 
   const genePoints = useMemo(() => featurePoints(cleanCells(), gene, c, nPcs), [gene, c, nPcs]);
   // Revealed clusters take their type color; the unknown stays gray so it reads as "not in the table".
@@ -57,7 +59,8 @@ export function AnnotationStep() {
     const rows = matchOrder();
     return rows.flatMap((m, i): Pt[] => {
       const isRevealed = i < shown;
-      const t = isRevealed && m.key ? typeByKey.get(m.key)! : null;
+      const key = m.key ?? (unknownNamed ? "neut" : null);
+      const t = isRevealed && key ? typeByKey.get(key)! : null;
       const color = t ? c[t.token as keyof typeof c] : isRevealed ? c["--ct-junk"] : c["--seq0"];
       const alpha = cur < 0 ? (isRevealed ? 0.75 : 0.5) : i === cur ? 0.95 : 0.2;
       return cellsOfCluster(getClusters("default"), m.cluster).map((cell) => {
@@ -65,10 +68,11 @@ export function AnnotationStep() {
         return { x, y, color, alpha, r: i === cur ? 2.8 : 2.3, tip: `cluster ${m.cluster}` };
       });
     });
-  }, [c, nPcs, shown, cur]);
+  }, [c, nPcs, shown, cur, unknownNamed]);
 
   const nameOf = (id: number) => {
-    const k = matchOf.get(id)?.key;
+    const m = matchOf.get(id);
+    const k = m ? keyOf(m) : null;
     return k ? typeByKey.get(k)! : null;
   };
   const labels = clusters.map((info) => {
@@ -129,14 +133,19 @@ export function AnnotationStep() {
           </ChartFrame>
         )}
       </Grid2>
-      {markersFound && <MatchList rows={[...revealed].sort((a, b) => a.cluster - b.cluster)} current={now?.cluster} />}
+      {markersFound && <MatchList rows={[...revealed].sort((a, b) => a.cluster - b.cluster)} current={now?.cluster} unknownNamed={unknownNamed} />}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
         <Button onClick={() => dispatch({ type: "runSingleR" })} disabled={!markersFound || reveal.running || singleR} hint="SingleR()">
           {singleR ? "SingleR done" : "Run SingleR"}
         </Button>
         {!markersFound && <span className="text-[13px] text-muted">Find markers first.</span>}
       </div>
-      {singleR && <SingleRPanel />}
+      {singleR && (
+        <>
+          <SingleRPanel known={order.filter((m) => m.key)} />
+          {unknown && <UnknownCheck cluster={unknown.cluster} named={unknownNamed} onName={() => dispatch({ type: "nameUnknown" })} />}
+        </>
+      )}
       <StepStory step="annotation" />
       <ReferenceDetails step="annotation">
         <PaperNote
@@ -149,23 +158,3 @@ export function AnnotationStep() {
   );
 }
 
-function SingleRPanel() {
-  const rows = singleRAgreement();
-  return (
-    <ChartFrame
-      title={<><Term k="SingleR" /> agreement with your labels</>}
-      caption="Low agreement is a clue, not an error: references can lack rare states (γδ T, developing neutrophils), so markers decide."
-    >
-      <HBars
-        ariaLabel="Share of cells where SingleR agrees with the manual label"
-        rows={rows.map((r) => ({
-          label: r.label,
-          value: r.agree,
-          color: r.agree >= 0.8 ? "var(--good)" : "var(--warn)",
-          text: pct(r.agree, 0),
-          tip: `${r.label} · ${pct(r.agree, 0)} agree · otherwise called "${r.alt}"`,
-        }))}
-      />
-    </ChartFrame>
-  );
-}

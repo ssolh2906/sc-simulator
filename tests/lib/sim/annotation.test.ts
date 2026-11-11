@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CELL_TYPES } from "@/content/cellTypes";
-import { matchOrder, matchReference } from "@/lib/sim/annotation";
+import { matchOrder, matchReference, maturityCheck } from "@/lib/sim/annotation";
 import { getClusters } from "@/lib/sim/clusters";
 
 describe("matchReference", () => {
@@ -20,6 +20,15 @@ describe("matchReference", () => {
     const order = matchOrder();
     expect(order).toHaveLength(rows.length);
     expect(order.at(-1)!.key).toBeNull();
+  });
+
+  it("shows the unknown cluster as granule-on, mature-off", () => {
+    const unknown = rows.find((r) => !r.key)!;
+    const check = maturityCheck(unknown.cluster);
+    const granule = check.filter((g) => g.kind === "granule");
+    const mature = check.filter((g) => g.kind === "mature");
+    expect(Math.max(...granule.map((g) => g.pct))).toBeGreaterThan(0.4);
+    expect(Math.max(...mature.map((g) => g.pct))).toBeLessThan(0.1);
   });
 
   it("flags the FCGR3A-sharing types as low confidence", () => {

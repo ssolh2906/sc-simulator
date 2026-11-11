@@ -127,6 +127,22 @@ export function matchOrder(): RefMatch[] {
   return [...rows.filter((r) => r.key), ...rows.filter((r) => !r.key)];
 }
 
+/** Granule genes say "neutrophil lineage"; FCGR3B and CXCR2 appear only once neutrophils mature. */
+export const MATURITY_GENES: { gene: string; kind: "granule" | "mature" }[] = [
+  { gene: "ELANE", kind: "granule" },
+  { gene: "MPO", kind: "granule" },
+  { gene: "LTF", kind: "granule" },
+  { gene: "LCN2", kind: "granule" },
+  { gene: "FCGR3B", kind: "mature" },
+  { gene: "CXCR2", kind: "mature" },
+];
+
+/** % of a cluster's cells expressing each maturity gene. */
+export function maturityCheck(clusterId: number) {
+  const pct = new Map(clusterDotPlot(MATURITY_GENES.map((g) => g.gene), [clusterId]).map((d) => [d.gene, d.pct]));
+  return MATURITY_GENES.map((g) => ({ ...g, pct: pct.get(g.gene)! }));
+}
+
 /** SingleR-style agreement per type, and the label it confuses each type with. */
 const SINGLE_R: Record<CellTypeKey, [number, string]> = {
   cd4t: [0.95, "CD8 T"], cd8t: [0.88, "CD4 T"], gdt: [0.58, "CD8 T"], nk: [0.93, "CD8 T"],

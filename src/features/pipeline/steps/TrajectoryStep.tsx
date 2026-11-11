@@ -76,6 +76,12 @@ export function TrajectoryStep() {
 
   return (
     <>
+      {/* Ties this step to the unknown cluster found in Annotation, so the question comes before the method. */}
+      <div className="border-l-[3px] border-accent py-1 pl-3.5 text-sm text-ink">
+        <b>Why this page.</b> In Annotation, one cluster matched no known PBMC type: developing neutrophils, which
+        normally stay in the bone marrow. On the map they sit right next to plasmablasts. <b>Could plasmablasts be turning
+        into them?</b> RNA velocity can suggest a direction, but it cannot prove it.
+      </div>
       <div className="rounded-xl border border-warn/60 bg-surface-2 px-3 py-2.5 text-sm">
         This path is a <b>hypothesis</b> from <Term k="RNA velocity" />, not a proven lineage. Another explanation:{" "}
         <Term k="emergency granulopoiesis" />, where the marrow releases immature neutrophils that only look related.

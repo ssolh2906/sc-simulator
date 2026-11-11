@@ -21,6 +21,8 @@ export type PipelineState = {
   junkRemoved: boolean;
   /** FindAllMarkers run and clusters matched to the PBMC reference. */
   markersFound: boolean;
+  /** The cluster no reference type fit, named from SingleR's hint plus maturity markers. */
+  unknownNamed: boolean;
   singleR: boolean;
   velocityRun: boolean;
 };
@@ -39,6 +41,7 @@ export const initialState: PipelineState = {
   flagged: [],
   junkRemoved: false,
   markersFound: false,
+  unknownNamed: false,
   singleR: false,
   velocityRun: false,
 };
@@ -58,6 +61,7 @@ export type PipelineAction =
   | { type: "setFlags"; clusters: number[] }
   | { type: "removeJunk" }
   | { type: "findMarkers" }
+  | { type: "nameUnknown" }
   | { type: "runSingleR" }
   | { type: "runVelocity" };
 
@@ -104,8 +108,11 @@ export function reducer(s: PipelineState, a: PipelineAction): PipelineState {
       return complete({ ...s, junkRemoved: true }, "junk-clusters");
     case "findMarkers":
       return { ...s, markersFound: true };
+    case "nameUnknown":
+      return complete({ ...s, unknownNamed: true }, "annotation");
     case "runSingleR":
-      return complete({ ...s, singleR: true }, "annotation");
+      // Not the end of the step any more: the unknown cluster still needs a name.
+      return { ...s, singleR: true };
     case "runVelocity":
       return complete({ ...s, velocityRun: true }, "trajectory");
   }

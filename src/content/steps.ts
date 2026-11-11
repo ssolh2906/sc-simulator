@@ -51,8 +51,8 @@ export const STORY: Record<StorySlug, StoryCopy> = {
   },
   annotation: {
     do: "Find each cluster's marker genes and compare them with known PBMC cell types. Clusters that fit nothing stay unknown.",
-    see: "CD3E → T · NKG7 → NK · MS4A1 → B · JCHAIN → Plasmablast · CD14 → Mono · LTF → Dev. Neutrophil.",
-    locked: "Press Find markers, then run SingleR to confirm.",
+    see: "Ten clusters matched known PBMC types. One fit none: granule genes on, mature markers off. Immature neutrophils, not normally in blood.",
+    locked: "Press Find markers, run SingleR, then name the cluster nothing fit.",
   },
   composition: {
     do: "For each sample, compute the % of each cell type. Compare groups, one point per sample.",

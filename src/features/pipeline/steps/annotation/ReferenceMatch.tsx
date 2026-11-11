@@ -78,7 +78,7 @@ export function MatchCaption({ m }: { m: RefMatch | null }) {
 }
 
 /** One row per revealed cluster: its top genes and what the reference says it is, or that nothing fits. */
-export function MatchList({ rows, current }: { rows: RefMatch[]; current?: number }) {
+export function MatchList({ rows, current, unknownNamed }: { rows: RefMatch[]; current?: number; unknownNamed?: boolean }) {
   return (
     <div>
       <p className="mb-1.5 font-mono text-[11.5px] text-muted">Top marker genes per cluster → best reference match</p>
@@ -99,6 +99,14 @@ export function MatchList({ rows, current }: { rows: RefMatch[]; current?: numbe
                   {typeOf(r.key).name}
                 </span>
                 {!r.confident && <StatusChip ok={false}>also fits {typeOf(r.runnerUp).name}</StatusChip>}
+              </span>
+            ) : unknownNamed ? (
+              <span className="flex items-center gap-2">
+                <span className="flex items-center font-medium text-ink">
+                  <Swatch token={typeOf("neut").token} />
+                  {typeOf("neut").name}
+                </span>
+                <StatusChip ok>named from markers</StatusChip>
               </span>
             ) : (
               <StatusChip ok={false}>Unknown · no known type fits</StatusChip>
