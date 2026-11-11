@@ -6,7 +6,11 @@ import { LAST_STEP, STEPS, stepHref, stepIndex, type StepSlug } from "@/features
 
 const BTN = "inline-flex min-w-24 items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold";
 
-/** Previous / next. Next pulses once the current step is done. */
+// Muted until the step is done, but never locked: the user may skip ahead.
+const NEXT_IDLE = "border border-line bg-surface-2 text-muted";
+const NEXT_DONE = "bg-good text-accent-ink pulse";
+
+/** Previous / next. Next turns green (and pulses) once the current step is done. */
 export function Pager({ slug }: { slug: StepSlug }) {
   const i = stepIndex(slug);
   const done = useStepDone(slug);
@@ -24,7 +28,7 @@ export function Pager({ slug }: { slug: StepSlug }) {
         </Link>
       )}
       {next ? (
-        <Link href={stepHref(next.slug)} className={`${BTN} bg-accent text-accent-ink ${done ? "pulse" : ""}`}>
+        <Link href={stepHref(next.slug)} className={`${BTN} transition-colors ${done ? NEXT_DONE : NEXT_IDLE}`}>
           {next.rail} →
         </Link>
       ) : (

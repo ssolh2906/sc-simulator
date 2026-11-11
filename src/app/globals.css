@@ -155,7 +155,7 @@ svg.chart {
 
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 var(--accent);
+    box-shadow: 0 0 0 0 var(--good);
   }
   100% {
     box-shadow: 0 0 0 10px transparent;

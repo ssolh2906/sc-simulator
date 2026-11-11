@@ -30,10 +30,10 @@ const Y_LABEL: Record<NormMethod, string> = {
   sct: "mean Pearson residual",
 };
 
-const CAPTION: Record<NormMethod, string> = {
-  raw: "Raw counts: deeper cells look higher for every gene.",
-  log: "LogNormalize: better, but deeper cells still look a bit higher.",
-  sct: "SCTransform residuals: the depth trend is gone.",
+const CAPTION: Record<NormMethod, { name: string; text: string }> = {
+  raw: { name: "Raw counts", text: "deeper cells look higher for every gene." },
+  log: { name: "LogNormalize", text: "better, but deeper cells still look a bit higher." },
+  sct: { name: "SCTransform residuals", text: "the depth trend is gone." },
 };
 
 const TOY_COLORS = ["var(--ct-b)", "var(--ct-cd4t)", "var(--ct-pdc)"];
@@ -64,6 +64,7 @@ export function NormalizeStep() {
     };
   }, [norm, c]);
 
+  const trendGone = Math.abs(fit.r) < 0.1;
   const midX = (xRange[0] + xRange[1]) / 2;
   const midY = (yDomain[0] + yDomain[1]) / 2;
   const steps: { text: string; hit: (p: { x: number; y: number }, i: number) => boolean; r?: number }[] = [
@@ -89,8 +90,12 @@ export function NormalizeStep() {
     <>
       <Controls>
         <Segmented label="Normalization" options={METHODS} value={norm} onChange={(m) => dispatch({ type: "setNorm", method: m })} />
-        <StatusChip ok={Math.abs(fit.r) < 0.1}>depth trend r = {fit.r.toFixed(2)}</StatusChip>
+        <StatusChip ok={trendGone}>depth trend r = {fit.r.toFixed(2)}</StatusChip>
       </Controls>
+      {/* The takeaway of this step: sits next to the toggle so cause and effect read together. */}
+      <p aria-live="polite" className={`border-l-[3px] py-1 pl-3.5 text-base text-ink ${trendGone ? "border-good" : "border-warn"}`}>
+        <strong className={trendGone ? "text-good" : "text-warn"}>{CAPTION[norm].name}:</strong> {CAPTION[norm].text}
+      </p>
       <Grid2>
         <ChartFrame title="3 cells, same biology, different depth" aside={norm === "sct" ? "CD3E · corrected counts" : `CD3E · ${norm === "raw" ? "UMIs" : "log value"}`}>
           <Bars
@@ -132,7 +137,7 @@ export function NormalizeStep() {
       </Grid2>
       {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <p className="text-sm text-ink-2">
-        {CAPTION[norm]} Red line = trend. <Term k="SCTransform" /> keeps <Term k="Pearson residual">Pearson residuals</Term>{" "}
+        Red line = trend. <Term k="SCTransform" /> keeps <Term k="Pearson residual">Pearson residuals</Term>{" "}
         and can also <Term k="regress out" /> quality variables.
       </p>
       <StepStory step="normalize" />
