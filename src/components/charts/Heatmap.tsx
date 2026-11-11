@@ -32,7 +32,9 @@ export function Heatmap({ rows, cols, value, sig, limit = 2.5, focus, ariaLabel 
   const l = 72;
   const t = 40;
   const ch = 20;
-  const height = t + rows.length * ch + 30;
+  // Room under the grid for the legend swatches (10px) and their labels below them.
+  const legendY = t + rows.length * ch + 12;
+  const height = legendY + 28;
   const cw = Math.min(56, (width - l - 4) / Math.max(cols.length, 1));
   const groups = [...new Set(cols.map((c) => c.group))];
   const rowOpacity = (r: string) => (focus?.rows && !focus.rows.includes(r) ? FADED : 1);
@@ -76,7 +78,10 @@ export function Heatmap({ rows, cols, value, sig, limit = 2.5, focus, ariaLabel 
               })}
             </g>
           ))}
-          <g transform={`translate(${l},${height - 18})`}>
+          <g transform={`translate(${l},${legendY})`}>
+            <text x={-6} y={9} textAnchor="end" fontSize={10.5} fill="var(--muted)">
+              log2FC
+            </text>
             {[-limit, -limit / 2, 0, limit / 2, limit].map((v, i) => (
               <g key={v}>
                 <rect x={i * 30} y={0} width={28} height={10} rx={2} fill={fill(v, limit)} />
