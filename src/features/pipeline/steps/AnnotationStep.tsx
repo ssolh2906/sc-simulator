@@ -8,6 +8,7 @@ import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { Button } from "@/components/ui/Button";
 import { Grid2, Note } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Term } from "@/components/ui/Term";
 import { CELL_TYPES } from "@/content/cellTypes";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -72,11 +73,13 @@ export function AnnotationStep() {
       </div>
       {singleR && <SingleRPanel />}
       <StepStory step="annotation" />
-      <PaperNote
-        tutorial="Known marker genes only."
-        paper="FindMarkers (Wilcoxon) + known markers, confirmed with SingleR."
-        facts={["annotation", "nkMarkers", "gdMarkers", "devNeutGenes"]}
-      />
+      <ReferenceDetails step="annotation">
+        <PaperNote
+          tutorial="Known marker genes only."
+          paper="FindMarkers (Wilcoxon) + known markers, confirmed with SingleR."
+          facts={["annotation", "nkMarkers", "gdMarkers", "devNeutGenes"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

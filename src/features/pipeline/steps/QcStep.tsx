@@ -10,6 +10,7 @@ import { Controls, Grid2, Note } from "@/components/ui/Layout";
 import { Legend } from "@/components/ui/Legend";
 import { NextAction } from "@/components/ui/NextAction";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -156,11 +157,13 @@ export function QcStep() {
       <Legend items={[{ label: "keep", color: "var(--accent)" }, { label: "remove", color: "var(--muted)" }]} />
       <Note>Later steps use the paper&apos;s cutoffs, so everyone continues with the same cells.</Note>
       <StepStory step="qc" />
-      <PaperNote
-        tutorial="nFeature and %mt cutoffs from the Seurat tutorial (e.g. 200–2,500 genes, mt < 5%)."
-        paper="UMIs 1,000–15,000, mt < 20%, rRNA < 20%, genes/UMI ≤ 0.75."
-        facts={["qcUmi", "qcMt", "qcMultiplet", "qcGenes"]}
-      />
+      <ReferenceDetails step="qc">
+        <PaperNote
+          tutorial="nFeature and %mt cutoffs from the Seurat tutorial (e.g. 200–2,500 genes, mt < 5%)."
+          paper="UMIs 1,000–15,000, mt < 20%, rRNA < 20%, genes/UMI ≤ 0.75."
+          facts={["qcUmi", "qcMt", "qcMultiplet", "qcGenes"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

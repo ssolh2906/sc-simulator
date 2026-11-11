@@ -6,6 +6,7 @@ import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { ChipRow } from "@/components/ui/Chip";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Segmented } from "@/components/ui/Segmented";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
@@ -65,11 +66,13 @@ export function ClusteringStep() {
         algorithm itself only sees the graph.
       </p>
       <StepStory step="clustering" />
-      <PaperNote
-        tutorial="Leiden clustering at resolution 0.5–0.8."
-        paper="FindNeighbors(dims = 1:50) + FindClusters() with Louvain: 30 clusters (13 here)."
-        facts={["clustering", "scale"]}
-      />
+      <ReferenceDetails step="clustering">
+        <PaperNote
+          tutorial="Leiden clustering at resolution 0.5–0.8."
+          paper="FindNeighbors(dims = 1:50) + FindClusters() with Louvain: 30 clusters (13 here)."
+          facts={["clustering", "scale"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

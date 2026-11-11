@@ -6,6 +6,7 @@ import { ChartFrame } from "@/components/charts/ChartFrame";
 import { ToggleChip } from "@/components/ui/Chip";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Segmented } from "@/components/ui/Segmented";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -103,11 +104,13 @@ export function CompositionStep() {
         Pooling treats each of ~2,000 cells as independent evidence. The real replicates are the <b>14 samples</b> (from 13 people), so the per-sample test is the honest one.
       </p>
       <StepStory step="composition" />
-      <PaperNote
-        tutorial="Cell-level % per group: prop.table(table(celltype, condition))."
-        paper="Per-sample % compared with a two-sided Wilcoxon rank-sum test."
-        facts={["compositionStats", "depleted", "plasmablasts", "devNeut", "devNeutPosition"]}
-      />
+      <ReferenceDetails step="composition">
+        <PaperNote
+          tutorial="Cell-level % per group: prop.table(table(celltype, condition))."
+          paper="Per-sample % compared with a two-sided Wilcoxon rank-sum test."
+          facts={["compositionStats", "depleted", "plasmablasts", "devNeut", "devNeutPosition"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

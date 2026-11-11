@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { StatTile, StatTiles } from "@/components/ui/StatTile";
 import { Term } from "@/components/ui/Term";
 import { ChartFrame } from "@/components/charts/ChartFrame";
@@ -41,11 +42,13 @@ export function QuestionStep() {
       </Grid2>
       {loaded && <CountMatrix />}
       <StepStory step="question" />
-      <PaperNote
-        tutorial="One group of patients vs one group of controls."
-        paper={<><Term k="Seq-Well" /> <Term k="scRNA-seq" /> on <Term k="PBMC">PBMCs</Term>: 14 samples from 13 people, in 3 groups.</>}
-        facts={["method", "donors", "groups", "scale"]}
-      />
+      <ReferenceDetails step="question">
+        <PaperNote
+          tutorial="One group of patients vs one group of controls."
+          paper={<><Term k="Seq-Well" /> <Term k="scRNA-seq" /> on <Term k="PBMC">PBMCs</Term>: 14 samples from 13 people, in 3 groups.</>}
+          facts={["method", "donors", "groups", "scale"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

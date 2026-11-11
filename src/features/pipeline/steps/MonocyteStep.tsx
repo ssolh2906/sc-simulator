@@ -6,6 +6,7 @@ import { ChartFrame } from "@/components/charts/ChartFrame";
 import { Heatmap, type HeatFocus } from "@/components/charts/Heatmap";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Segmented } from "@/components/ui/Segmented";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -97,11 +98,13 @@ export function MonocyteStep() {
       {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <p className="text-sm text-ink-2">{SEE[tab]}</p>
       <StepStory step="monocytes" />
-      <PaperNote
-        tutorial="Pool all COVID cells vs all healthy cells in one FindMarkers call."
-        paper="Each COVID sample vs all healthy controls (Wilcoxon, Bonferroni)."
-        facts={["monoDesign", "hla2", "hla1", "isg", "cytokines"]}
-      />
+      <ReferenceDetails step="monocytes">
+        <PaperNote
+          tutorial="Pool all COVID cells vs all healthy cells in one FindMarkers call."
+          paper="Each COVID sample vs all healthy controls (Wilcoxon, Bonferroni)."
+          facts={["monoDesign", "hla2", "hla1", "isg", "cytokines"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

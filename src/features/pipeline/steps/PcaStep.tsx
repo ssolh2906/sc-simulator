@@ -7,6 +7,7 @@ import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { ChipRow } from "@/components/ui/Chip";
 import { Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -50,11 +51,13 @@ export function PcaStep() {
         </StatusChip>
       </ChipRow>
       <StepStory step="pca" />
-      <PaperNote
-        tutorial="About 10 PCs, picked at the elbow."
-        paper="The first 50 PCs. With SCTransform, using more PCs is usually safe."
-        facts={["pcs"]}
-      />
+      <ReferenceDetails step="pca">
+        <PaperNote
+          tutorial="About 10 PCs, picked at the elbow."
+          paper="The first 50 PCs. With SCTransform, using more PCs is usually safe."
+          facts={["pcs"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

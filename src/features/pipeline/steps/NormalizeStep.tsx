@@ -8,6 +8,7 @@ import { niceTicks, toTicks } from "@/components/charts/axes";
 import { spotlight } from "@/components/charts/spotlight";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Segmented } from "@/components/ui/Segmented";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
@@ -92,7 +93,7 @@ export function NormalizeStep() {
         <Segmented label="Normalization" options={METHODS} value={norm} onChange={(m) => dispatch({ type: "setNorm", method: m })} />
         <StatusChip ok={trendGone}>depth trend r = {fit.r.toFixed(2)}</StatusChip>
       </Controls>
-      {/* The takeaway of this step: sits next to the toggle so cause and effect read together. */}
+      {/* Tier 2 · result. The takeaway sits next to the toggle so cause and effect read together. */}
       <p aria-live="polite" className={`border-l-[3px] py-1 pl-3.5 text-base text-ink ${trendGone ? "border-good" : "border-warn"}`}>
         <strong className={trendGone ? "text-good" : "text-warn"}>{CAPTION[norm].name}:</strong> {CAPTION[norm].text}
       </p>
@@ -136,16 +137,18 @@ export function NormalizeStep() {
         </ChartFrame>
       </Grid2>
       {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
-      <p className="text-sm text-ink-2">
+      <p className="text-[13px] text-muted">
         Red line = trend. <Term k="SCTransform" /> keeps <Term k="Pearson residual">Pearson residuals</Term>{" "}
         and can also <Term k="regress out" /> quality variables.
       </p>
       <StepStory step="normalize" />
-      <PaperNote
-        tutorial="LogNormalize (scale to 10,000, then log1p)."
-        paper="SCTransform, regressing out genes/cell, UMIs/cell, %mt and %rRNA."
-        facts={["sct"]}
-      />
+      <ReferenceDetails step="normalize">
+        <PaperNote
+          tutorial="LogNormalize (scale to 10,000, then log1p)."
+          paper="SCTransform, regressing out genes/cell, UMIs/cell, %mt and %rRNA."
+          facts={["sct"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

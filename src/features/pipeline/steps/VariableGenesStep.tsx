@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Legend } from "@/components/ui/Legend";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Slider } from "@/components/ui/Slider";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -110,11 +111,13 @@ export function VariableGenesStep() {
         ]}
       />
       <StepStory step="variable-genes" />
-      <PaperNote
-        tutorial="FindVariableFeatures: top 2,000 genes."
-        paper="SCTransform's own variable genes (3,000 by default)."
-        facts={["sct"]}
-      />
+      <ReferenceDetails step="variable-genes">
+        <PaperNote
+          tutorial="FindVariableFeatures: top 2,000 genes."
+          paper="SCTransform's own variable genes (3,000 by default)."
+          facts={["sct"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

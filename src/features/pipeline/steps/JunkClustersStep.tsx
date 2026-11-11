@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { ToggleChip } from "@/components/ui/Chip";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -130,11 +131,13 @@ export function JunkClustersStep() {
         {junkRemoved && <StatusChip ok>2 junk clusters removed</StatusChip>}
       </Controls>
       <StepStory step="junk-clusters" />
-      <PaperNote
-        tutorial="Not a standard tutorial step: QC is often assumed to be enough."
-        paper="Two mito/ribo-dominated clusters were removed after clustering."
-        facts={["junk"]}
-      />
+      <ReferenceDetails step="junk-clusters">
+        <PaperNote
+          tutorial="Not a standard tutorial step: QC is often assumed to be enough."
+          paper="Two mito/ribo-dominated clusters were removed after clustering."
+          facts={["junk"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

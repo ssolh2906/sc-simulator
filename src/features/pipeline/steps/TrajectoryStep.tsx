@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Legend } from "@/components/ui/Legend";
 import { Controls, Grid2 } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Slider } from "@/components/ui/Slider";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -141,11 +142,13 @@ export function TrajectoryStep() {
       </Grid2>
       {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <StepStory step="trajectory" />
-      <PaperNote
-        tutorial="Not part of a standard tutorial."
-        paper="RNA velocity + latent time (scVelo), presented as a hypothesis with an alternative explanation."
-        facts={["trajectory", "trajectoryGenes", "alternative", "devNeutPosition"]}
-      />
+      <ReferenceDetails step="trajectory">
+        <PaperNote
+          tutorial="Not part of a standard tutorial."
+          paper="RNA velocity + latent time (scVelo), presented as a hypothesis with an alternative explanation."
+          facts={["trajectory", "trajectoryGenes", "alternative", "devNeutPosition"]}
+        />
+      </ReferenceDetails>
     </>
   );
 }

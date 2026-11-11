@@ -7,6 +7,7 @@ import { spotlight } from "@/components/charts/spotlight";
 import { Button } from "@/components/ui/Button";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
+import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
 import { Segmented } from "@/components/ui/Segmented";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
@@ -83,7 +84,9 @@ export function UmapStep() {
       </ChartFrame>
       {umapRun && focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <StepStory step="umap" />
-      <PaperNote tutorial="RunUMAP(dims = 1:10)." paper="RunUMAP(dims = 1:50)." facts={["pcs"]} />
+      <ReferenceDetails step="umap">
+        <PaperNote tutorial="RunUMAP(dims = 1:10)." paper="RunUMAP(dims = 1:50)." facts={["pcs"]} />
+      </ReferenceDetails>
     </>
   );
 }
