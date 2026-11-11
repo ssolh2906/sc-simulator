@@ -50,9 +50,9 @@ export const STORY: Record<StorySlug, StoryCopy> = {
     locked: "Flag the suspicious clusters, check, then press Remove flagged.",
   },
   annotation: {
-    do: "Match each cluster to a cell type using its marker genes. Then confirm with SingleR.",
+    do: "Find each cluster's marker genes and compare them with known PBMC cell types. Clusters that fit nothing stay unknown.",
     see: "CD3E → T · NKG7 → NK · MS4A1 → B · JCHAIN → Plasmablast · CD14 → Mono · LTF → Dev. Neutrophil.",
-    locked: "Label every cluster, then run SingleR to confirm.",
+    locked: "Press Find markers, then run SingleR to confirm.",
   },
   composition: {
     do: "For each sample, compute the % of each cell type. Compare groups, one point per sample.",

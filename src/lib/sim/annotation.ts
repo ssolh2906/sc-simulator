@@ -51,6 +51,82 @@ export function topMarkers(clusterId: number, n = 5): string[] {
 
 export const isMtOrRibo = (gene: string) => /^(MT-|RPS|RPL)/.test(gene);
 
+export type RefType = { key: CellTypeKey; high: string[]; low?: string[] };
+
+/**
+ * A typical PBMC marker reference. Dev. Neutrophils are left out on purpose:
+ * granulocytes are normally removed when PBMCs are prepared, so no PBMC table lists them.
+ */
+export const PBMC_REFERENCE: RefType[] = [
+  { key: "cd4t", high: ["CD3E", "IL7R"], low: ["CD8A"] },
+  { key: "cd8t", high: ["CD3E", "CD8A"] },
+  { key: "gdt", high: ["CD3E", "TRDC"] },
+  { key: "nk", high: ["NCAM1", "FCGR3A"], low: ["CD3E"] },
+  { key: "b", high: ["MS4A1"] },
+  { key: "pb", high: ["JCHAIN"], low: ["MS4A1"] },
+  { key: "cd14", high: ["CD14", "LYZ"] },
+  { key: "cd16", high: ["FCGR3A", "LYZ"], low: ["CD14"] },
+  { key: "pdc", high: ["LILRA4"] },
+  { key: "cdc", high: ["FCER1A", "LYZ"] },
+];
+
+/** Below this, no reference type fits: the cluster stays unknown. */
+export const MATCH_MIN = 0.5;
+/** Best and runner-up closer than this: label it, but flag low confidence. */
+export const MATCH_MARGIN = 0.25;
+
+export type RefMatch = {
+  cluster: number;
+  /** null = unknown: no reference type scores above MATCH_MIN. */
+  key: CellTypeKey | null;
+  score: number;
+  runnerUp: CellTypeKey;
+  runnerUpScore: number;
+  confident: boolean;
+  /** % expressing each gene of the closest reference type: why it matched, or why even that fails. */
+  evidence: { gene: string; pct: number; want: "high" | "low" }[];
+};
+
+let matchCache: RefMatch[] | null = null;
+
+/** Score = mean % expressing the "high" genes minus mean % expressing the "low" genes. */
+export function matchReference(): RefMatch[] {
+  if (matchCache) return matchCache;
+  const clustering = getClusters("default");
+  const ids = clustering.info.filter((c) => !c.junk).map((c) => c.id);
+  const genes = [...new Set(PBMC_REFERENCE.flatMap((r) => [...r.high, ...(r.low ?? [])]))];
+  const pct = new Map(clusterDotPlot(genes, ids).map((d) => [`${d.gene}|${d.cluster}`, d.pct]));
+  const mean = (gs: string[], id: number) => (gs.length ? gs.reduce((s, g) => s + pct.get(`${g}|${id}`)!, 0) / gs.length : 0);
+  matchCache = ids.map((id) => {
+    const ranked = PBMC_REFERENCE.map((r) => ({ key: r.key, score: mean(r.high, id) - mean(r.low ?? [], id) })).sort(
+      (a, b) => b.score - a.score,
+    );
+    const [best, next] = ranked;
+    const known = best.score >= MATCH_MIN;
+    const ref = PBMC_REFERENCE.find((r) => r.key === best.key)!;
+    const evidence = [
+      ...ref.high.map((gene) => ({ gene, pct: pct.get(`${gene}|${id}`)!, want: "high" as const })),
+      ...(ref.low ?? []).map((gene) => ({ gene, pct: pct.get(`${gene}|${id}`)!, want: "low" as const })),
+    ];
+    return {
+      evidence,
+      cluster: id,
+      key: known ? best.key : null,
+      score: best.score,
+      runnerUp: known ? next.key : best.key,
+      runnerUpScore: known ? next.score : best.score,
+      confident: known && best.score - next.score >= MATCH_MARGIN,
+    };
+  });
+  return matchCache;
+}
+
+/** Reveal order for the matching animation: known clusters by ID, then the leftovers nothing fits. */
+export function matchOrder(): RefMatch[] {
+  const rows = matchReference();
+  return [...rows.filter((r) => r.key), ...rows.filter((r) => !r.key)];
+}
+
 /** SingleR-style agreement per type, and the label it confuses each type with. */
 const SINGLE_R: Record<CellTypeKey, [number, string]> = {
   cd4t: [0.95, "CD8 T"], cd8t: [0.88, "CD4 T"], gdt: [0.58, "CD8 T"], nk: [0.93, "CD8 T"],
@@ -77,14 +153,3 @@ export function singleRAgreement(): SingleRRow[] {
     });
   return singleRCache;
 }
-
-/** The correct manual label for each non-junk default cluster. */
-export function answerKey(): Record<number, string> {
-  return Object.fromEntries(
-    getClusters("default")
-      .info.filter((c) => !c.junk)
-      .map((c) => [c.id, CELL_TYPES[c.main].name]),
-  );
-}
-
-export const TYPE_NAMES = CELL_TYPES.map((t) => t.name);

@@ -19,7 +19,8 @@ export type PipelineState = {
   resolution: Resolution | null;
   flagged: number[];
   junkRemoved: boolean;
-  answers: Record<number, string>;
+  /** FindAllMarkers run and clusters matched to the PBMC reference. */
+  markersFound: boolean;
   singleR: boolean;
   velocityRun: boolean;
 };
@@ -37,7 +38,7 @@ export const initialState: PipelineState = {
   resolution: null,
   flagged: [],
   junkRemoved: false,
-  answers: {},
+  markersFound: false,
   singleR: false,
   velocityRun: false,
 };
@@ -56,8 +57,7 @@ export type PipelineAction =
   | { type: "toggleFlag"; cluster: number }
   | { type: "setFlags"; clusters: number[] }
   | { type: "removeJunk" }
-  | { type: "answer"; cluster: number; label: string }
-  | { type: "setAnswers"; answers: Record<number, string> }
+  | { type: "findMarkers" }
   | { type: "runSingleR" }
   | { type: "runVelocity" };
 
@@ -102,10 +102,8 @@ export function reducer(s: PipelineState, a: PipelineAction): PipelineState {
       return { ...s, flagged: a.clusters };
     case "removeJunk":
       return complete({ ...s, junkRemoved: true }, "junk-clusters");
-    case "answer":
-      return { ...s, answers: { ...s.answers, [a.cluster]: a.label } };
-    case "setAnswers":
-      return { ...s, answers: a.answers };
+    case "findMarkers":
+      return { ...s, markersFound: true };
     case "runSingleR":
       return complete({ ...s, singleR: true }, "annotation");
     case "runVelocity":
