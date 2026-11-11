@@ -105,10 +105,16 @@ export function JunkClustersStep() {
       {focus && <WalkthroughCaption tour={tour}>{focus.text}</WalkthroughCaption>}
       <TopMarkers ids={ids} flagged={flagged} />
       <Controls>
-        <Button onClick={() => setChecked(true)} disabled={!flagged.length || junkRemoved}>
+        {/* Primary moves to Remove once the flags are right: removing is what completes the step. */}
+        <Button variant={correct ? "ghost" : "primary"} onClick={() => setChecked(true)} disabled={!flagged.length || junkRemoved}>
           Check
         </Button>
-        <Button variant="ghost" onClick={() => dispatch({ type: "removeJunk" })} disabled={!correct || junkRemoved} hint="subset(invert = TRUE)">
+        <Button
+          variant={correct && !junkRemoved ? "primary" : "ghost"}
+          onClick={() => dispatch({ type: "removeJunk" })}
+          disabled={!correct || junkRemoved}
+          hint="subset(invert = TRUE)"
+        >
           Remove flagged
         </Button>
         {!junkRemoved && (

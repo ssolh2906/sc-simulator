@@ -47,7 +47,7 @@ export const STORY: Record<StorySlug, StoryCopy> = {
   "junk-clusters": {
     do: "Read each cluster's top genes. Flag clusters made mostly of MT- and RP- genes.",
     see: "Two clusters are damaged cells that slipped past QC. Remove them before naming cells.",
-    locked: "Flag the suspicious clusters, then press Check.",
+    locked: "Flag the suspicious clusters, check, then press Remove flagged.",
   },
   annotation: {
     do: "Match each cluster to a cell type using its marker genes. Then confirm with SingleR.",
