@@ -23,6 +23,7 @@ export const GLOSSARY = {
   PCA: "Principal component analysis. Summarizes many genes as a few main axes of variation.",
   elbow: "Where the variance bars flatten. Later PCs add mostly noise.",
   UMAP: "Draws high-dimensional data as a 2D map. Nearby cells are similar.",
+  "PCs used": "Which principal components UMAP takes as input. 1:5 = PC1 to PC5 (R's 1:n means 1 through n). Too few lose cell-type detail; the paper used 1:50.",
   "SNN graph": "Shared nearest neighbor graph. Two cells are linked when they share many neighbors.",
   Louvain: "An algorithm that finds tightly connected groups in a graph. Leiden is a newer variant.",
   resolution: "Clustering knob. Higher values cut the graph into more, smaller clusters.",

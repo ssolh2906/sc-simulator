@@ -12,7 +12,11 @@ export function StepTask({ step, hint = true }: { step: StorySlug; hint?: boolea
   return (
     <>
       <DoCard>{s.do}</DoCard>
-      {hint && <NextAction>{done ? "✓ Done. Read what you saw below, then go to the next step." : s.locked}</NextAction>}
+      {hint && (
+        <NextAction>
+          {done ? `✓ Done. ${s.done ? `${s.done} ` : ""}Read what you saw below, then go to the next step.` : s.locked}
+        </NextAction>
+      )}
     </>
   );
 }

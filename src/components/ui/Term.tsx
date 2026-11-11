@@ -59,7 +59,7 @@ export function Term({ k, children }: { k: GlossaryKey; children?: ReactNode }) 
           id={id}
           role="dialog"
           aria-label={k}
-          className="fixed z-30 block rounded-[9px] bg-ink px-3 py-2 text-[13px] leading-snug whitespace-normal text-bg shadow-lg"
+          className="fixed z-30 block rounded-[9px] bg-ink px-3 py-2 font-sans text-[13px] leading-snug whitespace-normal text-bg shadow-lg"
           style={{ left: pos.left, top: pos.top, width: WIDTH }}
         >
           <b className="mb-0.5 block font-mono text-xs">{k}</b>

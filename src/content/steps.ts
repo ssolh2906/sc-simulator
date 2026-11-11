@@ -3,7 +3,8 @@ import type { StepSlug } from "@/features/pipeline/registry";
 /** The conclusion step is itself the recap, so it has no story cards. */
 export type StorySlug = Exclude<StepSlug, "conclusion">;
 
-export type StoryCopy = { do: string; see: string; locked: string };
+/** `done` is an optional extra line for the task box once the step is done. */
+export type StoryCopy = { do: string; see: string; locked: string; done?: string };
 
 /** DO / SEE copy. Each line stays under ~20 words. */
 export const STORY: Record<StorySlug, StoryCopy> = {
@@ -36,6 +37,7 @@ export const STORY: Record<StorySlug, StoryCopy> = {
     do: "Place similar cells close together on a 2D map, using the chosen PCs.",
     see: "Islands appear = candidate cell groups. Too few PCs smear them. Gaps between islands mean little.",
     locked: "Press Run UMAP.",
+    done: "In real analyses, people try several PC counts and keep the one whose map looks stable.",
   },
   clustering: {
     do: "Link each cell to its nearest neighbors, then find tightly linked groups (Louvain).",

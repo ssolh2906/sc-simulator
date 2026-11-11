@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/charts/ChartFrame";
+import { ElbowChart } from "@/components/charts/ElbowChart";
 import { ScatterCanvas } from "@/components/charts/ScatterCanvas";
 import { spotlight } from "@/components/charts/spotlight";
 import { Button } from "@/components/ui/Button";
 import { Controls } from "@/components/ui/Layout";
 import { PaperNote } from "@/components/ui/PaperNote";
 import { ReferenceDetails } from "@/components/ui/ReferenceDetails";
-import { Segmented } from "@/components/ui/Segmented";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Term } from "@/components/ui/Term";
 import { HowToReadButton, useWalkthrough, WalkthroughCaption } from "@/components/ui/Walkthrough";
@@ -16,12 +16,11 @@ import { TYPE_INDEX } from "@/content/cellTypes";
 import { int } from "@/lib/format";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { getDataset, type Cell } from "@/lib/sim/cells";
+import { PC_VARIANCE } from "@/lib/sim/pca";
 import { umapPos } from "@/lib/sim/umap";
 import { usePipeline, usePipelineDispatch } from "../PipelineProvider";
 import { StepStory } from "./StepStory";
 import { UMAP_AXES } from "./umapView";
-
-const DIMS = [5, 10, 20, 50].map((n) => ({ value: String(n), label: `1:${n}` }));
 
 export function UmapStep() {
   const { nPcs, umapRun } = usePipeline();
@@ -70,9 +69,15 @@ export function UmapStep() {
         <Button onClick={run}>
           {umapRun ? "Re-run UMAP" : "Run UMAP"}
         </Button>
-        <Segmented label="PCs used" showLabel options={DIMS} value={String(nPcs)} onChange={(v) => dispatch({ type: "setPcs", n: Number(v) })} />
         {nPcs <= 6 && <StatusChip ok={false}>{nPcs} PCs: islands smear</StatusChip>}
       </Controls>
+      {/* Same bars as the PCA step and the same state, so the PCA choice shows up already selected. */}
+      <div>
+        <p className="font-mono text-[13px] text-ink-2">
+          <Term k="PCs used" />: 1:{nPcs} <span className="text-muted">· chosen in PCA, click a bar to try another</span>
+        </p>
+        <ElbowChart variance={PC_VARIANCE} selected={nPcs} onSelect={(n) => dispatch({ type: "setPcs", n })} height={120} />
+      </div>
       <ChartFrame title={<><Term k="UMAP" /> · 1 dot = 1 cell</>} aside={umapRun ? <HowToReadButton tour={tour} /> : "still PCA (press Run)"}>
         <ScatterCanvas
           ariaLabel={umapRun ? "UMAP of all cells" : "Cells before UMAP, on PC1 and PC2"}
